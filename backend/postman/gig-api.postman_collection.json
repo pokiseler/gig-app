@@ -1,0 +1,523 @@
+{
+  "info": {
+    "name": "Gig API Tests",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Auth - Register Provider",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status is 201', function () {",
+              "    pm.response.to.have.status(201);",
+              "});",
+              "const jsonData = pm.response.json();",
+              "pm.test('Registration returns token', function () {",
+              "    pm.expect(jsonData.token).to.be.a('string');",
+              "});",
+              "pm.environment.set('providerToken', jsonData.token);",
+              "pm.environment.set('providerUserId', jsonData.user._id);",
+              "pm.environment.set('authTestEmail', jsonData.user.email);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Postman Provider\",\n  \"email\": \"postman_provider_{{$timestamp}}@example.com\",\n  \"password\": \"password123\",\n  \"role\": \"provider\",\n  \"location\": {\n    \"city\": \"Bat Yam\"\n  }\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/auth/register",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "auth",
+            "register"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Auth - Login Provider",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status is 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "const jsonData = pm.response.json();",
+              "pm.test('Login returns token', function () {",
+              "    pm.expect(jsonData.token).to.be.a('string');",
+              "});",
+              "pm.environment.set('providerToken', jsonData.token);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"{{authTestEmail}}\",\n  \"password\": \"password123\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/auth/login",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "auth",
+            "login"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Auth - Get Me",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status is 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "const jsonData = pm.response.json();",
+              "pm.test('Me endpoint returns user', function () {",
+              "    pm.expect(jsonData.user).to.be.an('object');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{providerToken}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/auth/me",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "auth",
+            "me"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Create Gig - Valid Offering",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status is 201', function () {",
+              "    pm.response.to.have.status(201);",
+              "});",
+              "const jsonData = pm.response.json();",
+              "pm.test('Gig created successfully message exists', function () {",
+              "    pm.expect(jsonData.message).to.eql('Gig created successfully.');",
+              "});",
+              "pm.test('Returned gig type is offering', function () {",
+              "    pm.expect(jsonData.gig.type).to.eql('offering');",
+              "});",
+              "pm.environment.set('createdGigId', jsonData.gig._id);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{providerToken}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"title\": \"Postman Plumbing Test\",\n  \"description\": \"Testing create gig from Postman collection\",\n  \"type\": \"offering\",\n  \"category\": \"Plumbing\",\n  \"price\": 250,\n  \"location\": {\n    \"city\": \"Bat Yam\",\n    \"address\": \"Herzl 10\"\n  },\n  \"images\": [\n    \"https://example.com/job-photo.jpg\"\n  ]\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/gigs",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "gigs"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Get All Gigs - Filter And Search",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status is 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "const jsonData = pm.response.json();",
+              "pm.test('At least one gig is returned', function () {",
+              "    pm.expect(jsonData.total).to.be.above(0);",
+              "});",
+              "pm.test('Returned gigs match offering filter', function () {",
+              "    pm.expect(jsonData.gigs.every(function (gig) { return gig.type === 'offering'; })).to.eql(true);",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{baseUrl}}/api/gigs?type=offering&location=Bat%20Yam&search=Plumbing&minPrice=200&maxPrice=300&sortBy=createdAt&order=desc",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "gigs"
+          ],
+          "query": [
+            {
+              "key": "type",
+              "value": "offering"
+            },
+            {
+              "key": "location",
+              "value": "Bat Yam"
+            },
+            {
+              "key": "search",
+              "value": "Plumbing"
+            },
+            {
+              "key": "minPrice",
+              "value": "200"
+            },
+            {
+              "key": "maxPrice",
+              "value": "300"
+            },
+            {
+              "key": "sortBy",
+              "value": "createdAt"
+            },
+            {
+              "key": "order",
+              "value": "desc"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Create Gig - Invalid Provider Wanted",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status is 400', function () {",
+              "    pm.response.to.have.status(400);",
+              "});",
+              "const jsonData = pm.response.json();",
+              "pm.test('Business rule error is returned', function () {",
+              "    pm.expect(jsonData.message).to.eql('Providers can only create offering gigs.');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{providerToken}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"title\": \"Invalid Provider Wanted Test\",\n  \"description\": \"This should fail\",\n  \"type\": \"wanted\",\n  \"category\": \"Testing\",\n  \"price\": 120\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/gigs",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "gigs"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Update Gig - Owner Allowed",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status is 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "const jsonData = pm.response.json();",
+              "pm.test('Updated message exists', function () {",
+              "    pm.expect(jsonData.message).to.eql('Gig updated successfully.');",
+              "});",
+              "pm.test('Price was updated', function () {",
+              "    pm.expect(jsonData.gig.price).to.eql(275);",
+              "});",
+              "pm.test('City was updated', function () {",
+              "    pm.expect(jsonData.gig.location.city).to.eql('Holon');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{providerToken}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"price\": 275,\n  \"location\": {\n    \"city\": \"Holon\",\n    \"address\": \"Sokolov 5\"\n  },\n  \"images\": [\n    \"https://example.com/updated-job-photo.jpg\"\n  ]\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/gigs/{{createdGigId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "gigs",
+            "{{createdGigId}}"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Update Gig - Non Owner Blocked",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status is 403', function () {",
+              "    pm.response.to.have.status(403);",
+              "});",
+              "const jsonData = pm.response.json();",
+              "pm.test('Ownership error is returned', function () {",
+              "    pm.expect(jsonData.message).to.eql('You are not allowed to update this gig.');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{consumerToken}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"price\": 999\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/gigs/{{createdGigId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "gigs",
+            "{{createdGigId}}"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Get Created Gig",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status is 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "const jsonData = pm.response.json();",
+              "pm.test('Fetched gig id matches created gig id', function () {",
+              "    pm.expect(jsonData._id).to.eql(pm.environment.get('createdGigId'));",
+              "});",
+              "pm.test('Fetched gig contains the updated price', function () {",
+              "    pm.expect(jsonData.price).to.eql(275);",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{baseUrl}}/api/gigs/{{createdGigId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "gigs",
+            "{{createdGigId}}"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Delete Gig - Non Owner Blocked",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status is 403', function () {",
+              "    pm.response.to.have.status(403);",
+              "});",
+              "const jsonData = pm.response.json();",
+              "pm.test('Delete ownership error is returned', function () {",
+              "    pm.expect(jsonData.message).to.eql('You are not allowed to delete this gig.');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{consumerToken}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/gigs/{{createdGigId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "gigs",
+            "{{createdGigId}}"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Delete Created Gig",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status is 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "const jsonData = pm.response.json();",
+              "pm.test('Delete confirmation is returned', function () {",
+              "    pm.expect(jsonData.message).to.eql('Gig deleted successfully.');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{providerToken}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/gigs/{{createdGigId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "gigs",
+            "{{createdGigId}}"
+          ]
+        }
+      }
+    }
+  ]
+}
