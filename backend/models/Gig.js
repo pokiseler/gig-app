@@ -128,7 +128,14 @@ const GigSchema = new mongoose.Schema({
   },
 }, { timestamps: true }); // timestamps auto-adds createdAt and updatedAt
 
-// sparse: true = only index gigs that have actual GPS coordinates
+// Compound index for the most common list query pattern: filter by status + category,
+// sorted by newest first. Covers filterGigs() with any combination of those fields.
+GigSchema.index({ status: 1, category: 1, createdAt: -1 });
+
+// Standalone status index for queries that filter on status alone.
+GigSchema.index({ status: 1 });
+
+// Sparse 2dsphere index — only indexes gigs that have GPS coordinates set.
 GigSchema.index({ geoLocation: '2dsphere' }, { sparse: true });
 
 module.exports = mongoose.model('Gig', GigSchema);

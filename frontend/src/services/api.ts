@@ -87,7 +87,10 @@ export interface ReviewItem {
   createdAt: string;
 }
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
+// NEXT_PUBLIC_API_URL must be set in production (Vercel env vars).
+// In local development it falls back to localhost so .env.local is optional.
+const API_BASE_URL: string =
+  process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:5000/api";
 
 const buildHeaders = (token?: string, includeJsonContentType = true) => {
   const headers: Record<string, string> = {};

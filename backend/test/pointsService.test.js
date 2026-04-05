@@ -1,7 +1,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 
-const { createPointsService } = require('../services/pointsService').default;
+const { createPointsService } = require('../services/pointsService');
 
 const createSession = () => ({
   async withTransaction(work) {

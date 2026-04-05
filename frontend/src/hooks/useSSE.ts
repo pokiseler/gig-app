@@ -9,7 +9,10 @@ export interface SSENotification {
   timestamp: number;
 }
 
-const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:5000";
+// Derive the SSE base from the same env variable used by the rest of the app.
+// Strip a trailing /api suffix so we get the bare server URL.
+const SSE_BASE: string = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:5000/api")
+  .replace(/\/api\/?$/, "");
 
 export function useSSE(token: string | null) {
   const [notifications, setNotifications] = useState<SSENotification[]>([]);
@@ -18,7 +21,7 @@ export function useSSE(token: string | null) {
   useEffect(() => {
     if (!token) return;
 
-    const es = new EventSource(`${API}/api/events?token=${encodeURIComponent(token)}`);
+    const es = new EventSource(`${SSE_BASE}/api/events?token=${encodeURIComponent(token)}`);
     esRef.current = es;
 
     const handleEvent = (event: MessageEvent, name: string) => {

@@ -3,7 +3,7 @@ const Gig = require('../models/Gig');
 const User = require('../models/User');
 const Transaction = require('../models/Transaction');
 const sseManager = require('../events/sseManager');
-const pointsService = require('../services/pointsService').default;
+const pointsService = require('../services/pointsService');
 const { mapGigForResponse } = require('../utils/gigMapper');
 const {
   createGigSchema,
@@ -72,8 +72,8 @@ const normalizeUpdatePayload = (payload) => {
 const toMoney = (value) => Math.round(value * 100) / 100;
 
 const PLATFORM_FEE_PERCENT = Number(process.env.PLATFORM_FEE_PERCENT || 0);
-const GIG_OPENING_COST = toMoney(Number(process.env.GIG_OPENING_COST || 25));
-const GIG_COMPLETION_REWARD = toMoney(Number(process.env.GIG_COMPLETION_REWARD || 25));
+  const GIG_OPENING_COST = toMoney(Number(process.env.GIG_OPENING_COST || 30));
+const GIG_COMPLETION_REWARD = toMoney(Number(process.env.GIG_COMPLETION_REWARD || 30));
 
 const withMaybeSession = (query, session) => (session ? query.session(session) : query);
 const saveWithMaybeSession = (doc, session) => (session ? doc.save({ session }) : doc.save());
@@ -768,6 +768,7 @@ const markAsFinished = async (req, res) => {
           clientUserId: gig.client,
           freelancerUserId: gig.freelancer,
           paymentAmount: GIG_COMPLETION_REWARD,
+          freelancerAmount: toMoney(GIG_COMPLETION_REWARD / 2),
         });
       }
 
@@ -847,6 +848,7 @@ const confirmReceipt = async (req, res) => {
           clientUserId: gig.client,
           freelancerUserId: gig.freelancer,
           paymentAmount: GIG_COMPLETION_REWARD,
+          freelancerAmount: toMoney(GIG_COMPLETION_REWARD / 2),
         });
       }
 

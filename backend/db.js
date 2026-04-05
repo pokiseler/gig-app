@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 require('dotenv').config();
+const logger = require('./utils/logger');
 
 const DEFAULT_MONGO_TIMEOUT_MS = 10000;
 const DEFAULT_MONGO_MAX_POOL_SIZE = 10;
@@ -51,16 +52,21 @@ const registerConnectionListeners = () => {
 
   connectionListenersRegistered = true;
 
+  // Only enable verbose Mongoose query logging in development.
+  if (process.env.NODE_ENV !== 'production') {
+    mongoose.set('debug', false); // flip to true locally if you want query logging
+  }
+
   mongoose.connection.on('connected', () => {
-    console.log(`MongoDB connected: ${mongoose.connection.host}/${mongoose.connection.name}`);
+    logger.info(`MongoDB connected: ${mongoose.connection.host}/${mongoose.connection.name}`);
   });
 
   mongoose.connection.on('error', (error) => {
-    console.error('MongoDB connection error:', error.message);
+    logger.error('MongoDB connection error:', error.message);
   });
 
   mongoose.connection.on('disconnected', () => {
-    console.warn('MongoDB disconnected');
+    logger.warn('MongoDB disconnected');
   });
 };
 

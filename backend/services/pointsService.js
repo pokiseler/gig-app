@@ -1,6 +1,7 @@
-import { startSession as _startSession } from 'mongoose';
-import User from '../models/User';
-import Transaction from '../models/Transaction';
+const mongoose = require('mongoose');
+const User = require('../models/User');
+const Transaction = require('../models/Transaction');
+const logger = require('../utils/logger');
 
 const DEFAULT_TRANSACTION_OPTIONS = {
   readConcern: { level: 'snapshot' },
@@ -34,7 +35,7 @@ const createWithMaybeSession = (Model, docs, session) => (
 const createPointsService = ({
   userModel = User,
   transactionModel = Transaction,
-  startSession = () => _startSession(),
+  startSession = () => mongoose.startSession(),
 } = {}) => {
   const lockPointsInEscrow = async ({ userId, amount, session }) => userModel.findOneAndUpdate(
     {
@@ -94,7 +95,7 @@ const createPointsService = ({
       return await runAtomicOperation(work);
     } catch (error) {
       if (error.code === 'TRANSACTIONS_UNAVAILABLE') {
-        console.warn(
+        logger.warn(
           '[PointsService] MongoDB transactions are not available — running without a transaction.\n'
           + '               This is acceptable in local development but must NOT happen in production.\n'
           + '               Set REQUIRE_MONGO_TRANSACTIONS=true to enforce strict mode.',
@@ -169,11 +170,7 @@ const createPointsService = ({
 
     let updatedAdmin = null;
 
-    if (adminAmount > 0) {
-      if (!adminUserId) {
-        throw new Error('Admin account is required when part of the payment is burned or redirected.');
-      }
-
+    if (adminAmount > 0 && adminUserId) {
       updatedAdmin = await userModel.findOneAndUpdate(
         { _id: adminUserId },
         {
@@ -281,6 +278,5 @@ const createPointsService = ({
   };
 };
 
-export default createPointsService();
-const _createPointsService = createPointsService;
-export { _createPointsService as createPointsService };
+module.exports = createPointsService();
+module.exports.createPointsService = createPointsService;

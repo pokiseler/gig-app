@@ -1,9 +1,11 @@
 const express = require('express');
 const cors = require('cors');
+const compression = require('compression');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const path = require('path');
 const connectDB = require('./db');
+const logger = require('./utils/logger');
 const gigRoutes = require('./routes/gigRoutes');
 const authRoutes = require('./routes/authRoutes');
 const reviewRoutes = require('./routes/reviewRoutes');
@@ -13,22 +15,17 @@ const { notFound, errorHandler } = require('./middleware/errorMiddleware');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
-const localNetworkOriginPattern = /^http:\/\/192\.168\.\d+\.\d+:3000$/;
 
 app.disable('x-powered-by');
 
-// Initialize Middleware
-const defaultOrigins = [
-  'http://localhost:3000',
-  'http://127.0.0.1:3000',
-];
+// Build the CORS whitelist from the environment variable.
+// In production (Render), set CORS_ORIGINS to your Vercel URL.
+// In local dev, if the variable is absent, localhost:3000 is the default.
+const allowedOrigins = process.env.CORS_ORIGINS
+  ? process.env.CORS_ORIGINS.split(',').map((o) => o.trim()).filter(Boolean)
+  : ['http://localhost:3000', 'http://127.0.0.1:3000'];
 
-const envOrigins = (process.env.CORS_ORIGINS || '')
-  .split(',')
-  .map((origin) => origin.trim())
-  .filter(Boolean);
-
-const allowedOrigins = [...new Set([...defaultOrigins, ...envOrigins])];
+app.use(compression());
 
 app.use(helmet({
   crossOriginResourcePolicy: { policy: 'cross-origin' },
@@ -37,11 +34,10 @@ app.use(helmet({
 
 app.use(cors({
   origin(origin, callback) {
-    // Allow server-to-server requests (no Origin) and known frontend origins.
-    if (!origin || allowedOrigins.includes(origin) || localNetworkOriginPattern.test(origin)) {
+    // Allow server-to-server requests (no Origin header) and whitelisted origins.
+    if (!origin || allowedOrigins.includes(origin)) {
       return callback(null, true);
     }
-
     return callback(new Error('Not allowed by CORS'));
   },
   credentials: true,
@@ -90,9 +86,12 @@ app.use(errorHandler);
 const startServer = async () => {
   try {
     await connectDB();
-    app.listen(PORT, () => console.log(`🚀 Server started successfully on port ${PORT}`));
+
+    app.listen(PORT, '0.0.0.0', () => {
+      logger.info(`🚀 Server ready on port ${PORT}`);
+    });
   } catch (error) {
-    console.error('❌ Failed to start server:', error);
+    logger.error('❌ Failed to start server:', error);
     process.exit(1);
   }
 };
