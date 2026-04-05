@@ -87,7 +87,7 @@ export default function PostPage() {
           <CardContent>
             <p className="mb-4 text-sm text-neutral-600">{titleText}</p>
             <p className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
-              פתיחת חלתורה עולה 25 נקודות. בסיום החלתורה המבצע יקבל 25 נקודות.
+              פתיחת חלתורה עולה 30 נקודות. בסיום החלתורה המבצע יקבל 15 נקודות.
             </p>
 
             <form
