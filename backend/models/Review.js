@@ -16,8 +16,15 @@ const ReviewSchema = new mongoose.Schema({
   gigId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Gig',
-    required: true,
+    required: false,
     index: true,
+    sparse: true,
+  },
+  gigName: {
+    type: String,
+    trim: true,
+    maxlength: 200,
+    default: '',
   },
   rating: {
     type: Number,
@@ -33,7 +40,7 @@ const ReviewSchema = new mongoose.Schema({
   },
 }, { timestamps: true });
 
-ReviewSchema.index({ reviewer: 1, gigId: 1 }, { unique: true });
+ReviewSchema.index({ reviewer: 1, gigId: 1 }, { unique: true, sparse: true });
 
 ReviewSchema.statics.recalculateTargetUserStats = async function recalculateTargetUserStats(targetUserId) {
   const stats = await this.aggregate([

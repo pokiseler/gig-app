@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import Link from "next/link";
 import dynamic from "next/dynamic";
 import { useAuth } from "@/hooks/useAuth";
 import {
@@ -133,7 +134,7 @@ export default function TasksPage() {
                 <CardHeader>
                   <CardTitle className="flex items-center justify-between gap-2 text-base">
                     <span>{gig.title}</span>
-                    <span className="text-sm font-normal text-neutral-600">25 נקודות</span>
+                    <span className="text-sm font-normal text-neutral-600">30 נקודות</span>
                   </CardTitle>
                 </CardHeader>
 
@@ -146,7 +147,14 @@ export default function TasksPage() {
                   </div>
 
                   <div className="text-xs text-neutral-600">
-                    לקוח: {gig.client?.name || "-"} | פרילנסר: {gig.freelancer?.name || "-"}
+                    לקוח:{" "}
+                    {gig.client?._id ? (
+                      <Link href={`/users/${gig.client._id}`} className="hover:underline">{gig.client.name || "-"}</Link>
+                    ) : "-"}
+                    {" | "}פרילנסר:{" "}
+                    {gig.freelancer?._id ? (
+                      <Link href={`/users/${gig.freelancer._id}`} className="hover:underline">{gig.freelancer.name || "-"}</Link>
+                    ) : "-"}
                   </div>
 
                   <div className="flex flex-wrap gap-2">

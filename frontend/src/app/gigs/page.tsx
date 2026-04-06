@@ -261,7 +261,25 @@ export default function GigsPage() {
               <div>
                 <p className="text-xs font-medium tracking-wide text-neutral-500">פרטי חלתורה</p>
                 <h2 className="mt-1 text-2xl font-semibold text-neutral-900">{selectedGig.title}</h2>
-                <p className="mt-1 text-sm text-neutral-500">{selectedGig.category} · תשלום קבוע: 25 נקודות</p>
+                <p className="mt-1 text-sm text-neutral-500">
+                  {selectedGig.category} · תשלום קבוע: 30 נקודות
+                  {selectedGig.tipAmount && selectedGig.tipAmount > 0 ? (
+                    <span className="mr-2 inline-flex items-center rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800">
+                      ₪{selectedGig.tipAmount} טיפ ({selectedGig.tipMethod === "bit" ? "Bit" : "מזומן"})
+                    </span>
+                  ) : null}
+                </p>
+                {(selectedGig.author || selectedGig.postedBy) && (
+                  <p className="mt-1 text-xs text-neutral-400">
+                    מאת{" "}
+                    <Link
+                      href={`/users/${selectedGig.author?._id || selectedGig.postedBy?._id}`}
+                      className="hover:underline"
+                    >
+                      {selectedGig.author?.name || selectedGig.postedBy?.name}
+                    </Link>
+                  </p>
+                )}
               </div>
               <button
                 type="button"
@@ -335,7 +353,18 @@ export default function GigsPage() {
                   <p className="mb-3 text-xs font-semibold text-neutral-600">מידע נוסף</p>
                   <div className="grid gap-2 sm:grid-cols-2">
                     <p><span className="font-medium">סטטוס:</span> {selectedGig.status}</p>
-                    <p><span className="font-medium">מפרסם:</span> {selectedGig.author?.name || selectedGig.postedBy?.name || "-"}</p>
+                    <p>
+                      <span className="font-medium">מפרסם:</span>{" "}
+                      {(selectedGig.author || selectedGig.postedBy) ? (
+                        <Link
+                          href={`/users/${selectedGig.author?._id || selectedGig.postedBy?._id}`}
+                          className="underline hover:text-neutral-600"
+                          onClick={() => setSelectedGig(null)}
+                        >
+                          {selectedGig.author?.name || selectedGig.postedBy?.name}
+                        </Link>
+                      ) : "-"}
+                    </p>
                     <p><span className="font-medium">עיר:</span> {selectedGig.location?.city || "-"}</p>
                     <p><span className="font-medium">כתובת:</span> {selectedGig.location?.address || "-"}</p>
                   </div>

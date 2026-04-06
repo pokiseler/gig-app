@@ -46,6 +46,8 @@ export interface GigItem {
   clientConfirmed?: boolean;
   escrowAmount?: number;
   taskTransaction?: string;
+  tipAmount?: number;
+  tipMethod?: "cash" | "bit";
   createdAt?: string;
 }
 
@@ -175,7 +177,7 @@ export interface GigFilters {
   status?: PostStatus;
   category?: string;
   city?: string;
-  sortBy?: "createdAt" | "title" | "category";
+  sortBy?: "createdAt" | "title" | "category" | "tipAmount";
   order?: "asc" | "desc";
   limit?: number;
 }
@@ -208,6 +210,8 @@ export async function createGig(
     location: { city: string; address: string };
     tags?: string[];
     status?: PostStatus;
+    tipAmount?: number;
+    tipMethod?: "cash" | "bit";
   },
 ) {
   return request<{ message: string; gig: GigItem }>("/gigs", {
@@ -306,7 +310,7 @@ export async function getMyTasks(token: string) {
 
 export async function createReview(
   token: string,
-  payload: { targetUser: string; gigId: string; rating: number; comment?: string },
+  payload: { targetUser: string; gigId?: string; gigName?: string; rating: number; comment?: string },
 ) {
   return request<{ message: string; review: ReviewItem }>("/reviews", {
     method: "POST",

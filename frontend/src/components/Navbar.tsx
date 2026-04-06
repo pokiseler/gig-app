@@ -121,6 +121,14 @@ export function Navbar() {
                       פרופיל
                     </Link>
                   ) : null}
+                  {user?.role === "admin" ? (
+                    <Link
+                      href="/admin"
+                      className="hidden sm:inline-flex h-9 items-center rounded-full border border-amber-200 bg-amber-50 px-3 text-xs font-semibold text-amber-700 transition-all duration-200 hover:-translate-y-0.5 hover:bg-amber-100 hover:shadow-sm"
+                    >
+                      ניהול
+                    </Link>
+                  ) : null}
                   <div className="relative">
                     <button
                       type="button"

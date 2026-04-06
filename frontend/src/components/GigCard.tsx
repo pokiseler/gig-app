@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import type { GigItem } from "@/services/api";
 import {
   Card,
@@ -22,11 +23,10 @@ const TYPE_LABELS = {
   WANTED: "בקשה",
 } as const;
 
-const FIXED_GIG_POINTS = 25;
-
 export function GigCard({ gig, onOpen }: GigCardProps) {
-  const { title, description, category, location, author, postedBy, createdAt } = gig;
+  const { title, description, category, location, author, postedBy, createdAt, tipAmount, tipMethod } = gig;
   const normalizedType = "WANTED" as const;
+  const displayAuthor = author || postedBy;
 
   // Use a locale-agnostic ISO slice (YYYY-MM-DD) to avoid server/client
   // hydration mismatches caused by differing locale ICU data.
@@ -45,9 +45,14 @@ export function GigCard({ gig, onOpen }: GigCardProps) {
 
       <CardContent className="flex-1">
         <p className="line-clamp-3 text-sm leading-relaxed text-neutral-600">{description}</p>
-        <div className="mt-4 flex items-center justify-between text-xs text-neutral-500">
-          <span>{FIXED_GIG_POINTS} נקודות</span>
-          <span className="rounded-full border border-black/10 px-2 py-1">לפרטים</span>
+        <div className="mt-4 flex flex-wrap items-center gap-2 text-xs text-neutral-500">
+          <span>30 נקודות</span>
+          {tipAmount && tipAmount > 0 ? (
+            <Badge className="bg-green-100 text-green-800">
+              ₪{tipAmount} טיפ ({tipMethod === "bit" ? "Bit" : "מזומן"})
+            </Badge>
+          ) : null}
+          <span className="ml-auto rounded-full border border-black/10 px-2 py-1">לפרטים</span>
         </div>
       </CardContent>
 
@@ -59,7 +64,18 @@ export function GigCard({ gig, onOpen }: GigCardProps) {
               {location.address ? `, ${location.address}` : ""}
             </span>
           )}
-          {(author?.name || postedBy?.name) && <span>מאת {author?.name || postedBy?.name}</span>}
+          {displayAuthor?.name && (
+            <span>
+              מאת{" "}
+              <Link
+                href={`/users/${displayAuthor._id}`}
+                onClick={(e) => e.stopPropagation()}
+                className="hover:underline"
+              >
+                {displayAuthor.name}
+              </Link>
+            </span>
+          )}
           {formattedDate && <span>{formattedDate}</span>}
         </div>
       </CardContent>

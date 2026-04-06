@@ -23,6 +23,7 @@ const CATEGORIES = [...MARKET_CATEGORIES];
 const SORT_OPTIONS: { label: string; sortBy: GigFilters["sortBy"]; order: GigFilters["order"] }[] = [
   { label: "החדשים ביותר",       sortBy: "createdAt", order: "desc" },
   { label: "הוותיקים ביותר",      sortBy: "createdAt", order: "asc"  },
+  { label: "טיפ - מהגבוה לנמוך",   sortBy: "tipAmount",  order: "desc" },
 ];
 
 const INITIAL: GigFilters = {
@@ -98,7 +99,7 @@ export function GigFilters({ onFilter }: GigFiltersProps) {
       <div className="mb-4">
         <Label className="mb-1 block text-xs font-medium text-neutral-600">קטגוריה</Label>
         <Select
-          value={filters.category || "all"}
+          value={filters.category || undefined}
           onValueChange={(value) => {
             if (!value || value === "all") {
               set("category", "");

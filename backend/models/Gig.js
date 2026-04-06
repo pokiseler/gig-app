@@ -126,6 +126,17 @@ const GigSchema = new mongoose.Schema({
       type: [Number], // [longitude, latitude]
     },
   },
+  // Real-money tip offered on top of the points reward (optional)
+  tipAmount: {
+    type: Number,
+    default: 0,
+    min: 0,
+  },
+  tipMethod: {
+    type: String,
+    enum: ['cash', 'bit'],
+    default: 'cash',
+  },
 }, { timestamps: true }); // timestamps auto-adds createdAt and updatedAt
 
 // Compound index for the most common list query pattern: filter by status + category,

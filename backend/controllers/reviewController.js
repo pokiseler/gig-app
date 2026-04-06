@@ -15,35 +15,33 @@ const createReview = async (req, res) => {
       return res.status(400).json({ message: parsed.error.issues[0].message });
     }
 
-    const { targetUser, gigId, rating, comment } = parsed.data;
+    const { targetUser, gigId, gigName, rating, comment } = parsed.data;
 
     if (targetUser === req.user._id.toString()) {
       return res.status(400).json({ message: 'You cannot review yourself.' });
     }
 
-    const [targetUserDoc, gigDoc] = await Promise.all([
-      User.findById(targetUser),
-      Gig.findById(gigId),
-    ]);
-
+    const targetUserDoc = await User.findById(targetUser);
     if (!targetUserDoc) {
       return res.status(404).json({ message: 'Target user not found.' });
     }
 
-    if (!gigDoc) {
-      return res.status(404).json({ message: 'Gig not found.' });
+    if (gigId) {
+      const gigDoc = await Gig.findById(gigId);
+      if (!gigDoc) {
+        return res.status(404).json({ message: 'Gig not found.' });
+      }
+      const gigOwnerId = gigDoc.author ? gigDoc.author.toString() : gigDoc.postedBy?.toString();
+      if (!gigOwnerId || gigOwnerId !== targetUser) {
+        return res.status(400).json({ message: 'targetUser must match the gig owner.' });
+      }
     }
 
-    const gigOwnerId = gigDoc.author ? gigDoc.author.toString() : gigDoc.postedBy?.toString();
-    if (!gigOwnerId || gigOwnerId !== targetUser) {
-      return res.status(400).json({ message: 'targetUser must match the gig owner.' });
-    }
-
-    // Prepared for future transaction check: can enforce completed status here.
     const review = await Review.create({
       reviewer: req.user._id,
       targetUser,
-      gigId,
+      gigId: gigId || undefined,
+      gigName: gigName || '',
       rating,
       comment: comment || '',
     });

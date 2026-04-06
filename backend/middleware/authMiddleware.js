@@ -43,6 +43,16 @@ const protect = async (req, res, next) => {
     return res.status(401).json({ message: 'Not authorized, token is invalid.' });
   }
 };
+const adminGuard = (req, res, next) => {
+  if (req.user && req.user.role === 'admin') {
+    next(); // המשתמש הוא אדמין, תן לו לעבור
+  } else {
+    res.status(403).json({ message: 'Access denied. Admin only.' }); // זריקת שגיאת חסימה
+  }
+};
+
+// אל תשכח להוסיף את זה לייצוא בתחתית הקובץ:
+
 
 const optionalProtect = async (req, _res, next) => {
   try {
@@ -74,5 +84,8 @@ const optionalProtect = async (req, _res, next) => {
 
 module.exports = {
   protect,
+  adminGuard,
   optionalProtect,
 };
+
+

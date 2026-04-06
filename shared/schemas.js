@@ -49,6 +49,8 @@ const createGigSchema = z.object({
   status: statusEnum.optional(),
   tags: z.array(z.string().trim().min(1).max(40)).max(20).optional().default([]),
   images: z.array(z.string().url()).max(10).optional().default([]),
+  tipAmount: z.coerce.number().min(0).max(10000).optional().default(0),
+  tipMethod: z.enum(['cash', 'bit']).optional().default('cash'),
 });
 
 const updateGigSchema = z
@@ -62,6 +64,8 @@ const updateGigSchema = z
     geoLocation: geoLocationSchema,
     tags: z.array(z.string().trim().min(1).max(40)).max(20).optional(),
     images: z.array(z.string().url()).max(10).optional(),
+    tipAmount: z.coerce.number().min(0).max(10000).optional(),
+    tipMethod: z.enum(['cash', 'bit']).optional(),
   })
   .refine((payload) => Object.keys(payload).length > 0, {
     message: 'At least one field must be provided for update.',
@@ -73,14 +77,15 @@ const filterGigsSchema = z.object({
   category: z.string().trim().min(1).max(80).optional(),
   city: z.string().trim().min(1).max(100).optional(),
   status: statusEnum.optional(),
-  sortBy: z.enum(['createdAt', 'title', 'category']).optional(),
+  sortBy: z.enum(['createdAt', 'title', 'category', 'tipAmount']).optional(),
   order: z.enum(['asc', 'desc']).optional(),
   limit: z.coerce.number().int().min(1).max(100).optional(),
 });
 
 const createReviewSchema = z.object({
   targetUser: z.string().regex(objectIdRegex, 'targetUser must be a valid ObjectId.'),
-  gigId: z.string().regex(objectIdRegex, 'gigId must be a valid ObjectId.'),
+  gigId: z.string().regex(objectIdRegex, 'gigId must be a valid ObjectId.').optional(),
+  gigName: z.string().trim().max(200).optional().default(''),
   rating: z.coerce.number().int().min(1).max(5),
   comment: z.string().trim().min(2).max(1000).optional().default(''),
 });

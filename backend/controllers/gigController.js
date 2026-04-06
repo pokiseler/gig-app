@@ -52,6 +52,8 @@ const normalizeCreatePayload = (payload) => ({
   tags: payload.tags || [],
   images: payload.images || [],
   type: 'wanted',
+  tipAmount: payload.tipAmount ?? 0,
+  tipMethod: payload.tipMethod ?? 'cash',
 });
 
 const normalizeUpdatePayload = (payload) => {
@@ -124,6 +126,8 @@ const createGig = async (req, res) => {
           images: payload.images,
           location: payload.location,
           geoLocation: payload.geoLocation,
+          tipAmount: payload.tipAmount,
+          tipMethod: payload.tipMethod,
         },
       ], session);
 
