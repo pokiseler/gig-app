@@ -2,6 +2,145 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { MapPin, Clock, Coins } from "lucide-react";
+import { getGigs, type GigItem } from "@/services/api";
+import { GigCard } from "@/components/GigCard";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
+import { Badge } from "@/components/ui/badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+
+export function RecentWantedGrid() {
+  const [items, setItems] = useState<GigItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedGig, setSelectedGig] = useState<GigItem | null>(null);
+
+  useEffect(() => {
+    getGigs({ postType: "WANTED", sortBy: "createdAt", order: "desc", limit: 6 })
+      .then((result) => setItems(result.gigs || []))
+      .finally(() => setLoading(false));
+  }, []);
+
+  return (
+    <section className="rounded-2xl border border-black/10 bg-white/80 p-5 shadow-sm sm:p-6">
+      <div className="mb-4 flex items-center justify-between">
+        <h2 className="text-xl font-semibold">בקשות אחרונות שנפתחו</h2>
+        <Link href="/gigs" className="text-sm text-neutral-600 hover:text-black">
+          לכל הבקשות
+        </Link>
+      </div>
+
+      {loading ? (
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="h-64 animate-pulse rounded-xl bg-neutral-100" />
+          ))}
+        </div>
+      ) : items.length === 0 ? (
+        <p className="text-sm text-neutral-500">עדיין אין בקשות פתוחות חדשות.</p>
+      ) : (
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          {items.map((gig) => (
+            <GigCard key={gig._id} gig={gig} onOpen={setSelectedGig} />
+          ))}
+        </div>
+      )}
+
+      <Dialog open={!!selectedGig} onOpenChange={(open) => { if (!open) setSelectedGig(null); }}>
+        <DialogContent
+          dir="rtl"
+          className="max-h-[90vh] max-w-2xl overflow-y-auto text-right"
+        >
+          {selectedGig ? (
+            <>
+              <DialogHeader>
+                <DialogTitle className="text-2xl font-bold text-blue-900">
+                  {selectedGig.title}
+                </DialogTitle>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  <Badge variant="secondary" className="bg-blue-50 text-blue-700">
+                    {selectedGig.category}
+                  </Badge>
+                  {selectedGig.tipAmount && selectedGig.tipAmount > 0 ? (
+                    <Badge className="bg-green-100 text-green-800">
+                      ₪{selectedGig.tipAmount} טיפ ({selectedGig.tipMethod === "bit" ? "Bit" : "מזומן"})
+                    </Badge>
+                  ) : null}
+                </div>
+              </DialogHeader>
+
+              <div className="mt-4 space-y-6">
+                <p className="leading-relaxed text-neutral-700 whitespace-pre-wrap">
+                  {selectedGig.description}
+                </p>
+
+                <div className="grid grid-cols-2 gap-4 rounded-lg bg-neutral-50 p-4">
+                  <div className="flex items-center gap-2">
+                    <Coins className="h-5 w-5 text-amber-500" />
+                    <div>
+                      <p className="text-xs text-neutral-500">תגמול</p>
+                      <p className="font-bold">30 נקודות</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Clock className="h-5 w-5 text-blue-500" />
+                    <div>
+                      <p className="text-xs text-neutral-500">פורסם ב</p>
+                      <p className="font-medium">
+                        {selectedGig.createdAt
+                          ? new Date(selectedGig.createdAt).toLocaleDateString("he-IL")
+                          : "—"}
+                      </p>
+                    </div>
+                  </div>
+                  {selectedGig.location?.city ? (
+                    <div className="col-span-2 flex items-center gap-2 border-t pt-2">
+                      <MapPin className="h-5 w-5 text-red-500" />
+                      <div>
+                        <p className="text-xs text-neutral-500">מיקום</p>
+                        <p className="font-medium">
+                          {selectedGig.location.city}
+                          {selectedGig.location.address ? `, ${selectedGig.location.address}` : ""}
+                        </p>
+                      </div>
+                    </div>
+                  ) : null}
+                  {(selectedGig.author || selectedGig.postedBy) ? (
+                    <div className="col-span-2 border-t pt-2 text-sm">
+                      <span className="font-medium">מפרסם: </span>
+                      <Link
+                        href={`/users/${(selectedGig.author || selectedGig.postedBy)?._id}`}
+                        onClick={() => setSelectedGig(null)}
+                        className="underline hover:text-neutral-600"
+                      >
+                        {(selectedGig.author || selectedGig.postedBy)?.name}
+                      </Link>
+                    </div>
+                  ) : null}
+                </div>
+
+                <div className="flex justify-end">
+                  <Link
+                    href="/gigs"
+                    onClick={() => setSelectedGig(null)}
+                    className="inline-flex h-9 items-center rounded-full bg-black px-4 text-sm font-semibold text-white transition hover:bg-neutral-800"
+                  >
+                    לכל הבקשות
+                  </Link>
+                </div>
+              </div>
+            </>
+          ) : null}
+        </DialogContent>
+      </Dialog>
+    </section>
+  );
+}
+
 import { getGigs, type GigItem } from "@/services/api";
 import { GigCard } from "@/components/GigCard";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
