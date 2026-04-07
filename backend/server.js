@@ -26,6 +26,12 @@ const allowedOrigins = process.env.CORS_ORIGINS
   ? process.env.CORS_ORIGINS.split(',').map((o) => o.trim()).filter(Boolean)
   : ['http://localhost:3000', 'http://127.0.0.1:3000'];
 
+// Optional regex pattern for dynamic origins (e.g. Vercel preview deployments).
+// Set CORS_ORIGIN_PATTERN on Render to something like: chalturot-frontend.*\.vercel\.app
+const originPattern = process.env.CORS_ORIGIN_PATTERN
+  ? new RegExp(process.env.CORS_ORIGIN_PATTERN)
+  : null;
+
 app.use(compression());
 
 app.use(helmet({
@@ -39,7 +45,10 @@ app.use(cors({
     if (!origin || allowedOrigins.includes(origin)) {
       return callback(null, true);
     }
-    return callback(new Error('Not allowed by CORS'));
+    if (originPattern && originPattern.test(origin)) {
+      return callback(null, true);
+    }
+    return callback(Object.assign(new Error('Not allowed by CORS'), { status: 403 }));
   },
   credentials: true,
 }));
