@@ -1,6 +1,12 @@
 const mongoose = require('mongoose');
 require('dotenv').config();
+const dns = require('dns');
 const logger = require('./utils/logger');
+
+// Node.js c-ares on Windows sometimes points at 127.0.0.1 (WSL2/Docker/VPN
+// local resolver) which refuses SRV queries required by mongodb+srv:// URIs.
+// Force c-ares to use reliable public DNS so Atlas SRV lookups always work.
+dns.setServers(['8.8.8.8', '1.1.1.1', '8.8.4.4']);
 
 const DEFAULT_MONGO_TIMEOUT_MS = 10000;
 const DEFAULT_MONGO_MAX_POOL_SIZE = 10;

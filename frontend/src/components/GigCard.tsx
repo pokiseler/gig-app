@@ -12,7 +12,7 @@ import { Badge } from "@/components/ui/badge";
 
 interface GigCardProps {
   gig: GigItem;
-  onOpen: (gig: GigItem) => void;
+  onOpen?: (gig: GigItem) => void;
 }
 
 const TYPE_STYLES = {
@@ -33,7 +33,7 @@ export function GigCard({ gig, onOpen }: GigCardProps) {
   const formattedDate = createdAt ? createdAt.slice(0, 10) : null;
 
   return (
-    <button type="button" onClick={() => onOpen(gig)} className="w-full text-right">
+    <button type="button" onClick={() => onOpen?.(gig)} className="w-full text-right">
       <Card className="h-full cursor-pointer transition-all hover:-translate-y-0.5 hover:shadow-md">
       <CardHeader className="space-y-3">
         <div className="flex items-center gap-2">
