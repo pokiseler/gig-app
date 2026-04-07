@@ -1,8 +1,21 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { NavbarClientOnly } from "@/components/NavbarClientOnly";
 import { RecentWantedGrid } from "@/components/RecentWantedGrid";
+import { getGigs, type GigItem } from "@/services/api";
 
 export default function Home() {
+  const [items, setItems] = useState<GigItem[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    getGigs({ postType: "WANTED", sortBy: "createdAt", order: "desc", limit: 6 })
+      .then((result) => setItems(result.gigs || []))
+      .finally(() => setLoading(false));
+  }, []);
+
   return (
     <div className="min-h-screen bg-[radial-gradient(circle_at_top,_#f8efe1,_#f3f4ef_45%,_#ecefe8)] text-neutral-900">
       <NavbarClientOnly />
@@ -47,7 +60,7 @@ export default function Home() {
       </main>
 
       <section className="mx-auto w-full max-w-6xl px-4 pb-12 sm:px-6 sm:pb-16" dir="rtl">
-        <RecentWantedGrid />
+        <RecentWantedGrid items={items} loading={loading} />
       </section>
     </div>
   );

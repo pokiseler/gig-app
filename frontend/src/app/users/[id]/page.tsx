@@ -28,10 +28,12 @@ export default function UserProfilePage() {
 
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewComment, setReviewComment] = useState("");
-  const [reviewGigName, setReviewGigName] = useState("");
+  const [reviewGigId, setReviewGigId] = useState("");
   const [reviewSubmitting, setReviewSubmitting] = useState(false);
   const [reviewError, setReviewError] = useState("");
   const [reviewSuccess, setReviewSuccess] = useState("");
+
+  const completedGigs = requests.filter((g) => g.status === "completed");
 
   async function submitReview(e: React.FormEvent) {
     e.preventDefault();
@@ -42,13 +44,12 @@ export default function UserProfilePage() {
     try {
       await createReview(token, {
         targetUser: userId,
-        gigName: reviewGigName.trim() || undefined,
+        gigId: reviewGigId,
         rating: reviewRating,
         comment: reviewComment.trim() || undefined,
       });
       setReviewSuccess("הביקורת נשלחה בהצלחה!");
       setReviewComment("");
-      setReviewGigName("");
       setReviewRating(5);
       const result = await getUserProfile(userId);
       setUser(result.user);
@@ -74,6 +75,7 @@ export default function UserProfilePage() {
         setUser(result.user);
         setRequests(result.requests || []);
         setReviews(result.reviews || []);
+        setReviewGigId("");
       })
       .catch((err) => setError(err instanceof Error ? err.message : "טעינת הפרופיל נכשלה"))
       .finally(() => setLoading(false));
@@ -165,6 +167,35 @@ export default function UserProfilePage() {
                     <form onSubmit={submitReview} className="mb-5 rounded-xl border border-black/10 bg-white p-4 space-y-3">
                       <p className="font-semibold text-sm">כתוב ביקורת</p>
 
+                      {completedGigs.length > 0 ? (
+                        <div>
+                          <label className="block text-xs text-neutral-600 mb-1">בחר משימה קשורה</label>
+                          <select
+                            value={reviewGigId}
+                            onChange={(e) => setReviewGigId(e.target.value)}
+                            required
+                            className="w-full rounded-md border border-black/15 bg-neutral-50 px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-black/30"
+                          >
+                            <option value="">-- בחר --</option>
+                            {completedGigs.map((g) => (
+                              <option key={g._id} value={g._id}>{g.title}</option>
+                            ))}
+                          </select>
+                        </div>
+                      ) : (
+                        <div>
+                          <label className="block text-xs text-neutral-600 mb-1">מזהה משימה (ID)</label>
+                          <input
+                            type="text"
+                            value={reviewGigId}
+                            onChange={(e) => setReviewGigId(e.target.value)}
+                            required
+                            placeholder="הכנס ID של משימה"
+                            className="w-full rounded-md border border-black/15 bg-neutral-50 px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-black/30"
+                          />
+                        </div>
+                      )}
+
                       <div>
                         <label className="block text-xs text-neutral-600 mb-1">דירוג</label>
                         <div className="flex gap-1">
@@ -192,23 +223,12 @@ export default function UserProfilePage() {
                         />
                       </div>
 
-                      <div>
-                        <label className="block text-xs text-neutral-600 mb-1">שם המשימה (אופציונלי)</label>
-                        <input
-                          type="text"
-                          value={reviewGigName}
-                          onChange={(e) => setReviewGigName(e.target.value)}
-                          placeholder="לדוגמה: ניקיון דירה"
-                          className="w-full rounded-md border border-black/15 bg-neutral-50 px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-black/30"
-                        />
-                      </div>
-
                       {reviewError ? <p className="text-xs text-red-600">{reviewError}</p> : null}
                       {reviewSuccess ? <p className="text-xs text-green-600">{reviewSuccess}</p> : null}
 
                       <button
                         type="submit"
-                        disabled={reviewSubmitting}
+                        disabled={reviewSubmitting || !reviewGigId}
                         className="inline-flex h-9 items-center rounded-md bg-neutral-900 px-4 text-sm font-medium text-white transition hover:bg-neutral-700 disabled:opacity-50"
                       >
                         {reviewSubmitting ? "שולח..." : "שלח ביקורת"}
@@ -220,9 +240,6 @@ export default function UserProfilePage() {
                     {reviews.map((review) => (
                       <div key={review._id} className="rounded-lg border border-black/10 bg-white p-3">
                         <p className="font-medium">⭐ {review.rating.toFixed(1)} מאת {review.reviewer?.name}</p>
-                        {(review as ReviewItem & { gigName?: string }).gigName ? (
-                          <p className="text-xs text-neutral-400">משימה: {(review as ReviewItem & { gigName?: string }).gigName}</p>
-                        ) : null}
                         <p className="text-sm text-neutral-600">{review.comment}</p>
                       </div>
                     ))}
