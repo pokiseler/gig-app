@@ -15,16 +15,11 @@ const adminRoutes = require('./routes/adminRoutes');
 const { notFound, errorHandler } = require('./middleware/errorMiddleware');
 
 const app = express();
-// השורה שפותרת את השגיאה:
-app.set('trust proxy', 1); 
-
-// שאר ה-Middlewares שלך...
-app.use(cors(corsOptions));
-app.use(express.json());
-
 const PORT = process.env.PORT || 5000;
 
 app.disable('x-powered-by');
+// Required for express-rate-limit to work correctly behind Render's proxy.
+app.set('trust proxy', 1);
 
 // Build the CORS whitelist from the environment variable.
 // In production (Render), set CORS_ORIGINS to your Vercel URL.
