@@ -176,15 +176,15 @@ export default function AdminDashboardPage() {
   const roleLabel: Record<string, string> = { admin: "מנהל", provider: "נותן שירות", consumer: "מחפש שירות" };
   const statusLabel: Record<string, string> = { open: "פתוח", in_progress: "בתהליך", completed: "הושלם" };
   const statusColor: Record<string, string> = {
-    open: "bg-emerald-100 text-emerald-700",
-    in_progress: "bg-amber-100 text-amber-700",
-    completed: "bg-neutral-100 text-neutral-600",
+    open: "bg-emerald-500/20 text-emerald-300 border border-emerald-400/30",
+    in_progress: "bg-amber-500/20 text-amber-300 border border-amber-400/30",
+    completed: "bg-white/10 text-white/50 border border-white/10",
   };
 
   const statCards = [
-    { title: 'סה"כ משתמשים', value: stats?.totalUsers, icon: <Users className="h-5 w-5 text-amber-600" />, bg: "bg-amber-50" },
-    { title: "חלתורות במערכת", value: stats?.totalGigs, icon: <Briefcase className="h-5 w-5 text-neutral-600" />, bg: "bg-neutral-50" },
-    { title: "כלכלת המערכת (נקודות)", value: stats?.totalEconomyPoints, icon: <Coins className="h-5 w-5 text-emerald-600" />, bg: "bg-emerald-50" },
+    { title: 'סה"כ משתמשים', value: stats?.totalUsers, icon: <Users className="h-5 w-5 text-amber-400" />, bg: "glass-heavy border border-white/10" },
+    { title: "חלתורות במערכת", value: stats?.totalGigs, icon: <Briefcase className="h-5 w-5 text-blue-400" />, bg: "glass-heavy border border-white/10" },
+    { title: "כלכלת המערכת (נקודות)", value: stats?.totalEconomyPoints, icon: <Coins className="h-5 w-5 text-emerald-400" />, bg: "glass-heavy border border-white/10" },
   ];
 
   return (
@@ -196,14 +196,14 @@ export default function AdminDashboardPage() {
         <div className="mb-6 flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold tracking-tight">לוח בקרה</h1>
-            <p className="mt-0.5 text-sm text-neutral-500">ניהול מערכת חלתורות</p>
+            <p className="mt-0.5 text-sm text-white/50">ניהול מערכת חלתורות</p>
           </div>
           <Button
             variant="outline"
             size="sm"
             onClick={() => { void fetchStats(); void fetchUsers(); void fetchGigs(); }}
             disabled={statsLoading || usersLoading || gigsLoading}
-            className="flex items-center gap-2 rounded-full border-black/15 bg-white shadow-sm hover:bg-neutral-50"
+            className="flex items-center gap-2 rounded-full border-white/15 bg-white/5 text-white/70 shadow-sm hover:bg-white/10 hover:text-white"
           >
             <RefreshCw className={`h-4 w-4 ${statsLoading || usersLoading || gigsLoading ? "animate-spin" : ""}`} />
             רענון
@@ -220,20 +220,20 @@ export default function AdminDashboardPage() {
           {/* ── Stats Tab ── */}
           <TabsContent value="stats">
             {statsError ? (
-              <p className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{statsError}</p>
+              <p className="mb-4 rounded-lg border border-red-400/30 bg-red-900/30 px-4 py-3 text-sm text-red-300">{statsError}</p>
             ) : null}
             <div className="grid gap-4 sm:grid-cols-3">
               {statCards.map((card) => (
                 <Card key={card.title} className={`shadow-sm ${card.bg}`}>
                   <CardHeader className="flex flex-row items-center justify-between pb-2">
-                    <CardTitle className="text-sm font-medium text-neutral-600">{card.title}</CardTitle>
+                    <CardTitle className="text-sm font-medium text-white/70">{card.title}</CardTitle>
                     {card.icon}
                   </CardHeader>
                   <CardContent>
                     {statsLoading ? (
-                      <div className="h-8 w-24 animate-pulse rounded-md bg-black/10" />
+                      <div className="h-8 w-24 animate-pulse rounded-md bg-white/10" />
                     ) : (
-                      <p className="text-3xl font-bold tracking-tight">
+                      <p className="text-3xl font-bold tracking-tight text-white">
                         {card.value?.toLocaleString("he-IL") ?? "—"}
                       </p>
                     )}
@@ -246,55 +246,55 @@ export default function AdminDashboardPage() {
           {/* ── Users Tab ── */}
           <TabsContent value="users">
             {usersError ? (
-              <p className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{usersError}</p>
+              <p className="mb-4 rounded-lg border border-red-400/30 bg-red-900/30 px-4 py-3 text-sm text-red-300">{usersError}</p>
             ) : null}
-            <Card className="shadow-sm overflow-hidden">
+            <Card className="glass-heavy overflow-hidden border-white/10">
               <div className="overflow-x-auto">
                 <Table>
                   <TableHeader>
-                    <TableRow className="bg-neutral-50">
-                      <TableHead className="text-right">שם</TableHead>
-                      <TableHead className="text-right">אימייל</TableHead>
-                      <TableHead className="text-right">תפקיד</TableHead>
-                      <TableHead className="text-right">יתרה</TableHead>
+                    <TableRow className="border-white/10 bg-white/5 hover:bg-white/5">
+                      <TableHead className="text-right text-white/60">שם</TableHead>
+                      <TableHead className="text-right text-white/60">אימייל</TableHead>
+                      <TableHead className="text-right text-white/60">תפקיד</TableHead>
+                      <TableHead className="text-right text-white/60">יתרה</TableHead>
                       <TableHead />
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {usersLoading ? (
                       Array.from({ length: 4 }).map((_, i) => (
-                        <TableRow key={i}>
+                        <TableRow key={i} className="border-white/5">
                           {Array.from({ length: 5 }).map((__, j) => (
                             <TableCell key={j}>
-                              <div className="h-4 animate-pulse rounded bg-black/8 w-24" />
+                              <div className="h-4 animate-pulse rounded bg-white/10 w-24" />
                             </TableCell>
                           ))}
                         </TableRow>
                       ))
                     ) : users.length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={5} className="py-8 text-center text-sm text-neutral-500">אין משתמשים</TableCell>
+                      <TableRow className="border-white/5">
+                        <TableCell colSpan={5} className="py-8 text-center text-sm text-white/40">אין משתמשים</TableCell>
                       </TableRow>
                     ) : (
                       users.map((u) => (
-                        <TableRow key={u._id}>
-                          <TableCell className="font-medium">{u.name}</TableCell>
-                          <TableCell className="text-neutral-600">{u.email}</TableCell>
+                        <TableRow key={u._id} className="border-white/5 hover:bg-white/5">
+                          <TableCell className="font-medium text-white">{u.name}</TableCell>
+                          <TableCell className="text-white/60">{u.email}</TableCell>
                           <TableCell>
                             <Badge
                               variant="secondary"
-                              className={u.role === "admin" ? "bg-amber-100 text-amber-700" : ""}
+                              className={u.role === "admin" ? "bg-amber-400/15 text-amber-300 border-amber-400/30" : "bg-white/10 text-white/70 border-white/10"}
                             >
                               {roleLabel[u.role] ?? u.role}
                             </Badge>
                           </TableCell>
-                          <TableCell>{(u.balance ?? 0).toLocaleString("he-IL")} נק׳</TableCell>
+                          <TableCell className="text-white/80">{(u.balance ?? 0).toLocaleString("he-IL")} נק׳</TableCell>
                           <TableCell className="text-left">
                             {u.role !== "admin" ? (
                               <button
                                 type="button"
                                 onClick={() => setDeleteTarget({ type: "user", id: u._id, label: u.name })}
-                                className="rounded-md p-1.5 text-neutral-400 transition hover:bg-red-50 hover:text-red-600"
+                                className="rounded-md p-1.5 text-white/30 transition hover:bg-red-400/10 hover:text-red-400"
                                 title="מחק משתמש"
                               >
                                 <Trash2 className="h-4 w-4" />
@@ -313,43 +313,43 @@ export default function AdminDashboardPage() {
           {/* ── Gigs Tab ── */}
           <TabsContent value="gigs">
             {gigsError ? (
-              <p className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{gigsError}</p>
+              <p className="mb-4 rounded-lg border border-red-400/30 bg-red-900/30 px-4 py-3 text-sm text-red-300">{gigsError}</p>
             ) : null}
-            <Card className="shadow-sm overflow-hidden">
+            <Card className="glass-heavy overflow-hidden border-white/10">
               <div className="overflow-x-auto">
                 <Table>
                   <TableHeader>
-                    <TableRow className="bg-neutral-50">
-                      <TableHead className="text-right">כותרת</TableHead>
-                      <TableHead className="text-right">מפרסם</TableHead>
-                      <TableHead className="text-right">תשלום</TableHead>
-                      <TableHead className="text-right">סטטוס</TableHead>
+                    <TableRow className="border-white/10 bg-white/5 hover:bg-white/5">
+                      <TableHead className="text-right text-white/60">כותרת</TableHead>
+                      <TableHead className="text-right text-white/60">מפרסם</TableHead>
+                      <TableHead className="text-right text-white/60">תשלום</TableHead>
+                      <TableHead className="text-right text-white/60">סטטוס</TableHead>
                       <TableHead />
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {gigsLoading ? (
                       Array.from({ length: 4 }).map((_, i) => (
-                        <TableRow key={i}>
+                        <TableRow key={i} className="border-white/5">
                           {Array.from({ length: 5 }).map((__, j) => (
                             <TableCell key={j}>
-                              <div className="h-4 animate-pulse rounded bg-black/8 w-24" />
+                              <div className="h-4 animate-pulse rounded bg-white/10 w-24" />
                             </TableCell>
                           ))}
                         </TableRow>
                       ))
                     ) : gigs.length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={5} className="py-8 text-center text-sm text-neutral-500">אין חלתורות</TableCell>
+                      <TableRow className="border-white/5">
+                        <TableCell colSpan={5} className="py-8 text-center text-sm text-white/40">אין חלתורות</TableCell>
                       </TableRow>
                     ) : (
                       gigs.map((g) => (
-                        <TableRow key={g._id}>
-                          <TableCell className="font-medium max-w-[200px] truncate">{g.title}</TableCell>
-                          <TableCell className="text-neutral-600">{g.author?.name ?? "—"}</TableCell>
-                          <TableCell>30 נק׳</TableCell>
+                        <TableRow key={g._id} className="border-white/5 hover:bg-white/5">
+                          <TableCell className="font-medium max-w-[200px] truncate text-white">{g.title}</TableCell>
+                          <TableCell className="text-white/60">{g.author?.name ?? "—"}</TableCell>
+                          <TableCell className="text-white/80">30 נק׳</TableCell>
                           <TableCell>
-                            <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${statusColor[g.status] ?? "bg-neutral-100 text-neutral-600"}`}>
+                            <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${statusColor[g.status] ?? "bg-white/10 text-white/50"}`}>
                               {statusLabel[g.status] ?? g.status}
                             </span>
                           </TableCell>
@@ -357,7 +357,7 @@ export default function AdminDashboardPage() {
                             <button
                               type="button"
                               onClick={() => setDeleteTarget({ type: "gig", id: g._id, label: g.title })}
-                              className="rounded-md p-1.5 text-neutral-400 transition hover:bg-red-50 hover:text-red-600"
+                              className="rounded-md p-1.5 text-white/30 transition hover:bg-red-400/10 hover:text-red-400"
                               title="מחק חלתורה"
                             >
                               <Trash2 className="h-4 w-4" />

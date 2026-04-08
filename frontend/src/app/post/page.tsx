@@ -89,8 +89,8 @@ export default function PostPage() {
             <CardTitle className="text-xl font-bold text-white">יצירת פוסט חדש</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="mb-4 text-sm text-neutral-600">{titleText}</p>
-            <p className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+            <p className="mb-4 text-sm text-white/60">{titleText}</p>
+            <p className="mb-4 rounded-lg border border-amber-400/30 bg-white/5 px-3 py-2 text-sm text-amber-300">
               פתיחת חלתורה עולה 30 נקודות. בסיום החלתורה המבצע יקבל 15 נקודות.
             </p>
 
@@ -110,7 +110,7 @@ export default function PostPage() {
                 {errors.description && <p className="mt-1 text-xs text-red-600">{errors.description.message}</p>}
               </div>
 
-              <div className="rounded-lg border border-amber-100 bg-amber-50 p-4 grid gap-4 sm:grid-cols-2">
+              <div className="rounded-lg border border-amber-400/20 bg-white/5 p-4 grid gap-4 sm:grid-cols-2">
                 <div>
                   <Label className="mb-1 block">טיפ ב-₪ <span className="font-normal text-neutral-500">(אופציונלי)</span></Label>
                   <Input

@@ -19,8 +19,8 @@ export default function Home() {
       .finally(() => setLoading(false));
   }, []);
 
-  const helpHref = isAuthenticated ? "/gigs/create" : "/register";
-  const browseHref = isAuthenticated ? "/gigs" : "/register";
+const helpHref = isAuthenticated ? "/gigs/create" : "/auth";
+const browseHref = isAuthenticated ? "/gigs" : "/auth";
 
   return (
     <div

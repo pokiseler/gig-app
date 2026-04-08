@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   Menu, X, Bell, Home, Briefcase, PlusCircle,
-  ClipboardList, User, LogOut, LogIn, ShieldCheck,
+  ClipboardList, User, LogOut, LogIn, ShieldCheck, Coins,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useSSE } from "@/hooks/useSSE";
@@ -169,7 +169,7 @@ export function Navbar() {
                             const dKey = `${req.gigId}:${req.applicantId}:deny`;
                             return (
                               <div key={`${req.gigId}:${req.applicantId}`} className="rounded-xl border border-white/10 bg-white/5 p-2.5">
-                                <p className="text-xs font-medium text-white">{req.applicantName} רוצה לבצע: {req.gigTitle}</p>
+                                <p className="text-xs font-medium text-white"><Link href={`/users/${req.applicantId}`} onClick={closeAll} className="text-blue-300 hover:underline">{req.applicantName}</Link> רוצה לבצע: {req.gigTitle}</p>
                                 <div className="mt-2 flex gap-2">
                                   <button type="button" onClick={() => handleAcceptRequest(req)} disabled={busyRequestKey === aKey || busyRequestKey === dKey} className="rounded-lg bg-emerald-600 px-2.5 py-1 text-xs font-medium text-white disabled:opacity-50">
                                     {busyRequestKey === aKey ? "מאשר..." : "אישור"}
@@ -197,6 +197,12 @@ export function Navbar() {
                   <span className="hidden max-w-[100px] truncate text-xs text-white/40 lg:inline">
                     {user?.name}
                   </span>
+                  {typeof user?.balance === "number" && (
+                    <span className="hidden items-center gap-1 rounded-full border border-amber-400/30 bg-amber-400/10 px-2 py-0.5 text-xs font-semibold text-amber-300 lg:inline-flex">
+                      <Coins className="h-3 w-3" />
+                      {user.balance.toLocaleString("he-IL")}
+                    </span>
+                  )}
                   <button
                     type="button"
                     onClick={handleSignOut}
@@ -259,7 +265,7 @@ export function Navbar() {
               const dKey = `${req.gigId}:${req.applicantId}:deny`;
               return (
                 <div key={`${req.gigId}:${req.applicantId}`} className="rounded-xl border border-white/10 bg-white/5 p-2.5">
-                  <p className="text-xs font-medium text-white">{req.applicantName} רוצה לבצע: {req.gigTitle}</p>
+                  <p className="text-xs font-medium text-white"><Link href={`/users/${req.applicantId}`} onClick={closeAll} className="text-blue-300 hover:underline">{req.applicantName}</Link> רוצה לבצע: {req.gigTitle}</p>
                   <div className="mt-2 flex gap-2">
                     <button type="button" onClick={() => handleAcceptRequest(req)} disabled={busyRequestKey === aKey || busyRequestKey === dKey} className="rounded-lg bg-emerald-600 px-2.5 py-1 text-xs font-medium text-white disabled:opacity-50">
                       {busyRequestKey === aKey ? "מאשר..." : "אישור"}

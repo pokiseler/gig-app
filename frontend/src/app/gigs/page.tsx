@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
+import { Pencil } from "lucide-react";
 import { GigCard } from "@/components/GigCard";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import {
@@ -408,9 +409,10 @@ export default function GigsPage() {
                     <button
                       type="button"
                       onClick={() => setIsEditMode(true)}
-                      className="rounded-lg border border-black/15 px-4 py-2 text-sm font-medium"
+                      className="inline-flex items-center gap-2 rounded-xl border border-white/15 bg-white/5 px-4 py-2 text-sm font-medium text-white backdrop-blur-sm transition hover:bg-white/10"
                     >
-                      עריכה
+                      <Pencil className="h-4 w-4" />
+                      עריכת חלתורה
                     </button>
                     <button
                       type="button"

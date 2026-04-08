@@ -1,10 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { MapPin, Clock, Coins } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { MapPin, Clock, Coins, Pencil } from "lucide-react";
 import { type GigItem } from "@/services/api";
 import { GigCard } from "@/components/GigCard";
 import { Badge } from "@/components/ui/badge";
+import { useAuth } from "@/hooks/useAuth";
 import {
   Dialog,
   DialogContent,
@@ -19,6 +21,8 @@ interface RecentWantedGridProps {
 
 export function RecentWantedGrid({ items, loading = false }: RecentWantedGridProps) {
   const [selectedGig, setSelectedGig] = useState<GigItem | null>(null);
+  const { user } = useAuth();
+  const router = useRouter();
 
   if (loading) {
     return (
@@ -116,6 +120,23 @@ export function RecentWantedGrid({ items, loading = false }: RecentWantedGridPro
                     </div>
                   )}
                 </div>
+
+                {/* Edit button for owner */}
+                {(() => {
+                  const ownerId = selectedGig.author?._id ?? selectedGig.postedBy?._id;
+                  return user?._id && ownerId && user._id === ownerId ? (
+                    <div className="flex justify-end">
+                      <button
+                        type="button"
+                        onClick={() => { setSelectedGig(null); router.push("/gigs"); }}
+                        className="inline-flex items-center gap-2 rounded-xl border border-white/15 bg-white/5 px-4 py-2 text-sm font-medium text-white backdrop-blur-sm transition hover:bg-white/10"
+                      >
+                        <Pencil className="h-4 w-4" />
+                        עריכת חלתורה
+                      </button>
+                    </div>
+                  ) : null;
+                })()}
               </div>
             </>
           )}
