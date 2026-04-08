@@ -15,6 +15,13 @@ const adminRoutes = require('./routes/adminRoutes');
 const { notFound, errorHandler } = require('./middleware/errorMiddleware');
 
 const app = express();
+// השורה שפותרת את השגיאה:
+app.set('trust proxy', 1); 
+
+// שאר ה-Middlewares שלך...
+app.use(cors(corsOptions));
+app.use(express.json());
+
 const PORT = process.env.PORT || 5000;
 
 app.disable('x-powered-by');
