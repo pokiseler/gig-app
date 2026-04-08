@@ -2,84 +2,89 @@
 
 import Link from "next/link";
 import type { GigItem } from "@/services/api";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { MapPin, Calendar, Coins } from "lucide-react";
 
 interface GigCardProps {
   gig: GigItem;
   onOpen?: (gig: GigItem) => void;
 }
 
-const TYPE_STYLES = {
-  WANTED: "bg-blue-50 text-blue-700",
-} as const;
-
-const TYPE_LABELS = {
-  WANTED: "בקשה",
-} as const;
-
 export function GigCard({ gig, onOpen }: GigCardProps) {
   const { title, description, category, location, author, postedBy, createdAt, tipAmount, tipMethod } = gig;
-  const normalizedType = "WANTED" as const;
   const displayAuthor = author || postedBy;
-
-  // Use a locale-agnostic ISO slice (YYYY-MM-DD) to avoid server/client
-  // hydration mismatches caused by differing locale ICU data.
   const formattedDate = createdAt ? createdAt.slice(0, 10) : null;
 
   return (
-    <button type="button" onClick={() => onOpen?.(gig)} className="w-full text-right">
-      <Card className="h-full cursor-pointer transition-all hover:-translate-y-0.5 hover:shadow-md">
-      <CardHeader className="space-y-3">
-        <div className="flex items-center gap-2">
-          <Badge className={TYPE_STYLES[normalizedType]}>{TYPE_LABELS[normalizedType]}</Badge>
-          {category && <Badge variant="secondary">{category}</Badge>}
-        </div>
-        <CardTitle className="line-clamp-2 text-base">{title}</CardTitle>
-      </CardHeader>
-
-      <CardContent className="flex-1">
-        <p className="line-clamp-3 text-sm leading-relaxed text-neutral-600">{description}</p>
-        <div className="mt-4 flex flex-wrap items-center gap-2 text-xs text-neutral-500">
-          <span>30 נקודות</span>
+    <button
+      type="button"
+      onClick={() => onOpen?.(gig)}
+      className="w-full text-right group"
+    >
+      <div className="gig-card-glass flex h-full flex-col rounded-2xl p-5">
+        {/* Header */}
+        <div className="mb-3 flex flex-wrap items-center gap-2">
+          <Badge className="rounded-full bg-blue-500/20 text-blue-300 border-blue-400/30 text-xs">
+            בקשה
+          </Badge>
+          {category && (
+            <Badge variant="secondary" className="rounded-full text-xs bg-white/10 text-white/70 border-white/10">
+              {category}
+            </Badge>
+          )}
           {tipAmount && tipAmount > 0 ? (
-            <Badge className="bg-green-100 text-green-800">
-              ₪{tipAmount} טיפ ({tipMethod === "bit" ? "Bit" : "מזומן"})
+            <Badge className="rounded-full bg-emerald-500/20 text-emerald-300 border-emerald-400/30 text-xs">
+              ₪{tipAmount} טיפ
             </Badge>
           ) : null}
-          <span className="ml-auto rounded-full border border-black/10 px-2 py-1">לפרטים</span>
         </div>
-      </CardContent>
 
-      <CardContent className="pt-0">
-        <div className="flex flex-col gap-0.5 text-xs text-neutral-500">
+        {/* Title */}
+        <h3 className="mb-2 line-clamp-2 text-base font-semibold text-white leading-snug group-hover:text-blue-300 transition-colors">
+          {title}
+        </h3>
+
+        {/* Description */}
+        <p className="line-clamp-3 flex-1 text-sm leading-relaxed text-white/55">
+          {description}
+        </p>
+
+        {/* Footer */}
+        <div className="mt-4 flex flex-wrap items-center gap-3 border-t border-white/8 pt-3 text-xs text-white/40">
+          <span className="flex items-center gap-1 text-amber-400/80 font-medium">
+            <Coins className="h-3.5 w-3.5" />
+            30 נקודות
+          </span>
           {location?.city && (
-            <span>
+            <span className="flex items-center gap-1">
+              <MapPin className="h-3.5 w-3.5" />
               {location.city}
-              {location.address ? `, ${location.address}` : ""}
+            </span>
+          )}
+          {formattedDate && (
+            <span className="flex items-center gap-1">
+              <Calendar className="h-3.5 w-3.5" />
+              {formattedDate}
             </span>
           )}
           {displayAuthor?.name && (
-            <span>
-              מאת{" "}
-              <Link
-                href={`/users/${displayAuthor._id}`}
-                onClick={(e) => e.stopPropagation()}
-                className="hover:underline"
-              >
-                {displayAuthor.name}
-              </Link>
-            </span>
+            <Link
+              href={`/users/${displayAuthor._id}`}
+              onClick={(e) => e.stopPropagation()}
+              className="mr-auto text-blue-400/70 hover:text-blue-300 hover:underline"
+            >
+              {displayAuthor.name}
+            </Link>
           )}
-          {formattedDate && <span>{formattedDate}</span>}
         </div>
-      </CardContent>
-      </Card>
+
+        {/* "More details" hint */}
+        <div className="mt-3 flex justify-end">
+          <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-white/50 transition group-hover:border-blue-400/30 group-hover:bg-blue-500/10 group-hover:text-blue-300">
+            לפרטים ←
+          </span>
+        </div>
+      </div>
     </button>
   );
 }

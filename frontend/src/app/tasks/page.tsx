@@ -101,7 +101,7 @@ export default function TasksPage() {
 
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-[radial-gradient(circle_at_top,_#f8efe1,_#f3f4ef_45%,_#ecefe8)] text-neutral-900">
+      <div className="min-h-screen text-white">
         <Navbar />
         <main className="mx-auto w-full max-w-5xl px-4 py-8 sm:px-6 sm:py-14">
           <p className="text-sm text-neutral-600">יש להתחבר כדי לצפות במשימות.</p>
@@ -111,7 +111,7 @@ export default function TasksPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_top,_#f8efe1,_#f3f4ef_45%,_#ecefe8)] text-neutral-900" dir="rtl">
+    <div className="min-h-screen text-white" dir="rtl">
       <Navbar />
       <main className="mx-auto w-full max-w-5xl px-4 py-8 sm:px-6 sm:py-14">
         <h1 className="mb-6 text-3xl font-semibold">ניהול משימות</h1>

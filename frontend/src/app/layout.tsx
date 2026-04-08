@@ -28,9 +28,11 @@ export default function RootLayout({
       lang="he"
       dir="rtl"
       suppressHydrationWarning
-      className={`${heebo.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${heebo.variable} ${geistMono.variable} h-full antialiased dark`}
     >
-      <body suppressHydrationWarning className="min-h-full flex flex-col"><AuthProvider>{children}</AuthProvider></body>
+      <body suppressHydrationWarning className="app-gradient min-h-full flex flex-col text-white">
+        <AuthProvider>{children}</AuthProvider>
+      </body>
     </html>
   );
 }

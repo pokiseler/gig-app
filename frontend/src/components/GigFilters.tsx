@@ -70,15 +70,15 @@ export function GigFilters({ onFilter }: GigFiltersProps) {
     "החדשים ביותר";
 
   return (
-    <div className="rounded-xl border border-black/10 bg-white shadow-sm">
+    <div className="glass-heavy rounded-2xl">
       <Button
         type="button"
         onClick={() => setOpen((v) => !v)}
         variant="ghost"
-        className="flex w-full items-center justify-between rounded-none px-5 py-4 text-sm font-medium lg:hidden"
+        className="flex w-full items-center justify-between rounded-none px-5 py-4 text-sm font-medium text-white/80 hover:bg-white/5 lg:hidden"
       >
         <span>סינון ומיון</span>
-        <span className="text-neutral-400">{open ? "▲" : "▼"}</span>
+        <span className="text-white/40">{open ? "▲" : "▼"}</span>
       </Button>
 
       <form
@@ -86,7 +86,7 @@ export function GigFilters({ onFilter }: GigFiltersProps) {
         className={`p-5 pt-0 lg:block lg:pt-5 ${open ? "block" : "hidden"}`}
       >
       <div className="mb-4">
-        <Label className="mb-1 block text-xs font-medium text-neutral-600">חיפוש</Label>
+        <Label className="mb-1 block text-xs font-medium text-white/50">חיפוש</Label>
         <Input
           type="text"
           placeholder="כותרת, תיאור, קטגוריה או עיר..."
@@ -97,7 +97,7 @@ export function GigFilters({ onFilter }: GigFiltersProps) {
       </div>
 
       <div className="mb-4">
-        <Label className="mb-1 block text-xs font-medium text-neutral-600">קטגוריה</Label>
+        <Label className="mb-1 block text-xs font-medium text-white/50">קטגוריה</Label>
         <Select
           value={filters.category || undefined}
           onValueChange={(value) => {
@@ -122,7 +122,7 @@ export function GigFilters({ onFilter }: GigFiltersProps) {
       </div>
 
       <div className="mb-4">
-        <Label className="mb-1 block text-xs font-medium text-neutral-600">עיר</Label>
+        <Label className="mb-1 block text-xs font-medium text-white/50">עיר</Label>
         <Input
           type="text"
           placeholder="לדוגמה: תל אביב"
@@ -133,7 +133,7 @@ export function GigFilters({ onFilter }: GigFiltersProps) {
       </div>
 
       <div className="mb-5">
-        <Label className="mb-1 block text-xs font-medium text-neutral-600">מיון לפי</Label>
+        <Label className="mb-1 block text-xs font-medium text-white/50">מיון לפי</Label>
         <Select value={sortValue} onValueChange={handleSortChange}>
           <SelectTrigger className="w-full">
             <SelectValue>{selectedSortLabel}</SelectValue>

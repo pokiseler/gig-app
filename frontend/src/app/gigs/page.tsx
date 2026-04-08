@@ -186,7 +186,7 @@ export default function GigsPage() {
 
   if (!mounted) {
     return (
-      <div className="min-h-screen bg-[#f5f4ef] text-neutral-900">
+      <div className="min-h-screen text-white">
         <main className="mx-auto w-full max-w-6xl px-4 py-10 sm:px-6 sm:py-14">
           <div className="flex justify-center py-20">
             <LoadingSpinner size="lg" />
@@ -197,12 +197,12 @@ export default function GigsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_top,_#f8efe1,_#f3f4ef_45%,_#ecefe8)] text-neutral-900">
+    <div className="min-h-screen text-white">
       <Navbar />
       <main className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 sm:py-14" dir="rtl">
         <div className="mb-8 flex flex-wrap items-center justify-between gap-3">
-          <h1 className="text-3xl font-semibold">חלתורות</h1>
-          <Link href="/post" className="rounded-lg bg-black px-4 py-2 text-sm font-medium text-white transition hover:-translate-y-0.5 hover:bg-neutral-800">
+          <h1 className="text-3xl font-semibold text-white">חלתורות</h1>
+          <Link href="/post" className="rounded-xl bg-gradient-to-l from-blue-600 to-blue-500 px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-blue-900/30 transition hover:-translate-y-0.5">
             יצירת פוסט חדש
           </Link>
         </div>
@@ -216,7 +216,7 @@ export default function GigsPage() {
           {/* Results */}
           <section className="flex-1 min-w-0">
             {!loading && !error && (
-              <p className="mb-4 text-sm text-neutral-500">
+              <p className="mb-4 text-sm text-white/40">
                 נמצאו {total} {total === 1 ? "תוצאה" : "תוצאות"}
               </p>
             )}

@@ -81,12 +81,12 @@ export default function PostPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_top,_#f8efe1,_#f3f4ef_45%,_#ecefe8)] text-neutral-900" dir="rtl">
+    <div className="min-h-screen text-white" dir="rtl">
       <Navbar />
       <main className="mx-auto w-full max-w-3xl px-4 py-8 sm:px-6 sm:py-14">
-        <Card className="shadow-sm">
+        <Card className="glass-heavy rounded-3xl border-0 shadow-none">
           <CardHeader>
-            <CardTitle>יצירת פוסט חדש</CardTitle>
+            <CardTitle className="text-xl font-bold text-white">יצירת פוסט חדש</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="mb-4 text-sm text-neutral-600">{titleText}</p>
@@ -213,7 +213,7 @@ export default function PostPage() {
                 <Input {...register("tags")} placeholder="ניקיון, פעם בשבוע, בית" />
               </div>
 
-              <Button disabled={isSubmitting} type="submit" className="w-full">
+              <Button disabled={isSubmitting} type="submit" className="w-full bg-gradient-to-l from-blue-600 to-blue-500 text-white shadow-lg shadow-blue-900/30 hover:opacity-90">
                 {isSubmitting ? "מפרסם..." : "פרסום פוסט"}
               </Button>
             </form>

@@ -188,7 +188,7 @@ export default function AdminDashboardPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_top,_#f8efe1,_#f3f4ef_45%,_#ecefe8)] text-neutral-900" dir="rtl">
+    <div className="min-h-screen text-white" dir="rtl">
       <Navbar />
       <main className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 sm:py-12">
 

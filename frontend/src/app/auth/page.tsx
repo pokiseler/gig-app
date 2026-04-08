@@ -75,12 +75,12 @@ export default function AuthPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#f5f4ef] text-neutral-900" dir="rtl">
+    <div className="min-h-screen text-white" dir="rtl">
       <Navbar />
       <main className="mx-auto w-full max-w-xl px-4 py-8 sm:px-6 sm:py-14">
-        <Card>
+        <Card className="glass-heavy rounded-3xl border-0 shadow-none">
           <CardHeader>
-            <CardTitle>{mode === "login" ? "התחברות" : "הרשמה"}</CardTitle>
+            <CardTitle className="text-xl font-bold text-white">{mode === "login" ? "ברוכים החוזרים" : "יצירת חשבון חדש"}</CardTitle>
           </CardHeader>
 
           <CardContent>
@@ -104,13 +104,13 @@ export default function AuthPage() {
                 {errors.password && <p className="mt-1 text-xs text-red-600">{errors.password.message}</p>}
               </div>
 
-              <Button className="w-full" disabled={isSubmitting} type="submit">
+              <Button className="w-full bg-gradient-to-l from-blue-600 to-blue-500 text-white shadow-lg shadow-blue-900/30 hover:opacity-90" disabled={isSubmitting} type="submit">
                 {isSubmitting ? "מעבד בקשה..." : mode === "login" ? "התחברות" : "יצירת חשבון"}
               </Button>
             </form>
 
             <Button
-              className="mt-4"
+              className="mt-4 text-blue-400 hover:text-blue-300"
               variant="link"
               onClick={switchMode}
               type="button"
