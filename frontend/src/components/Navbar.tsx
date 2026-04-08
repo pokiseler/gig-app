@@ -342,16 +342,6 @@ export function Navbar() {
 }
 
 
-export function Navbar() {
-  const { user, token, isAuthenticated, signOut, loading } = useAuth();
-  const { notifications, dismiss, dismissAll } = useSSE(isAuthenticated ? token : null);
-  const router = useRouter();
-  const [pendingRequests, setPendingRequests] = useState<GigRequestItem[]>([]);
-  const [bellOpen, setBellOpen] = useState(false);
-  const [busyRequestKey, setBusyRequestKey] = useState("");
-  const navButtonClass =
-    "inline-flex h-9 items-center rounded-full px-3 text-sm font-medium text-neutral-700 transition-all duration-200 hover:-translate-y-0.5 hover:bg-white hover:text-black hover:shadow-sm";
-
   const loadRequests = useCallback(async () => {
     if (!token || !isAuthenticated) {
       setPendingRequests([]);
