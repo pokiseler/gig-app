@@ -3,7 +3,7 @@
 import Link from "next/link";
 import type { GigItem } from "@/services/api";
 import { Badge } from "@/components/ui/badge";
-import { MapPin, Calendar, Coins } from "lucide-react";
+import { MapPin, Calendar } from "lucide-react";
 
 interface GigCardProps {
   gig: GigItem;
@@ -51,10 +51,6 @@ export function GigCard({ gig, onOpen }: GigCardProps) {
 
         {/* Footer */}
         <div className="mt-4 flex flex-wrap items-center gap-3 border-t border-white/8 pt-3 text-xs text-white/40">
-          <span className="flex items-center gap-1 text-amber-400/80 font-medium">
-            <Coins className="h-3.5 w-3.5" />
-            30 נקודות
-          </span>
           {location?.city && (
             <span className="flex items-center gap-1">
               <MapPin className="h-3.5 w-3.5" />

@@ -2,17 +2,12 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { MapPin, Clock, Coins, Pencil } from "lucide-react";
+import Link from "next/link";
+import { MapPin, Pencil } from "lucide-react";
 import { type GigItem } from "@/services/api";
 import { GigCard } from "@/components/GigCard";
-import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Separator } from "@/components/ui/separator";
 
 interface RecentWantedGridProps {
   items: GigItem[];
@@ -48,100 +43,109 @@ export function RecentWantedGrid({ items, loading = false }: RecentWantedGridPro
         ))}
       </div>
 
-      <Dialog
-        open={!!selectedGig}
-        onOpenChange={(open) => {
-          if (!open) setSelectedGig(null);
-        }}
-      >
-        <DialogContent
-          dir="rtl"
-          className="max-h-[90vh] max-w-2xl overflow-y-auto text-right"
+      {selectedGig && (
+        <div
+          className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/40"
+          onClick={(e) => { if (e.target === e.currentTarget) setSelectedGig(null); }}
         >
-          {selectedGig && (
-            <>
-              <DialogHeader>
-                <DialogTitle className="text-2xl font-bold text-blue-900">
-                  {selectedGig.title}
-                </DialogTitle>
-                <div className="mt-2 flex flex-wrap gap-2">
-                  <Badge variant="secondary" className="bg-blue-50 text-blue-700">
-                    {selectedGig.category}
-                  </Badge>
-                  {selectedGig.tipAmount && selectedGig.tipAmount > 0 && (
-                    <Badge className="bg-green-100 text-green-800">
-                      &#x20AA;{selectedGig.tipAmount} טיפ (
-                      {selectedGig.tipMethod === "bit" ? "Bit" : "מזומן"})
-                    </Badge>
-                  )}
-                </div>
-              </DialogHeader>
-
-              <div className="mt-4 space-y-6">
-                <p className="whitespace-pre-wrap leading-relaxed text-neutral-700">
-                  {selectedGig.description}
+          <div
+            className="w-full max-w-2xl rounded-2xl border border-black/10 bg-white p-5 shadow-2xl max-h-[90vh] overflow-y-auto sm:p-6"
+            dir="rtl"
+          >
+            {/* Header */}
+            <div className="mb-4 flex items-start justify-between gap-4">
+              <div>
+                <p className="text-xs font-medium tracking-wide text-neutral-500">פרטי חלתורה</p>
+                <h2 className="mt-1 text-2xl font-semibold text-neutral-900">{selectedGig.title}</h2>
+                <p className="mt-1 text-sm text-neutral-500">
+                  {selectedGig.category}
+                  {selectedGig.tipAmount && selectedGig.tipAmount > 0 ? (
+                    <span className="mr-2 inline-flex items-center rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800">
+                      ₪{selectedGig.tipAmount} טיפ ({selectedGig.tipMethod === "bit" ? "Bit" : "מזומן"})
+                    </span>
+                  ) : null}
                 </p>
+                {(selectedGig.author || selectedGig.postedBy) && (
+                  <p className="mt-1 text-xs text-neutral-400">
+                    מאת{" "}
+                    <Link
+                      href={`/users/${selectedGig.author?._id || selectedGig.postedBy?._id}`}
+                      className="hover:underline"
+                      onClick={() => setSelectedGig(null)}
+                    >
+                      {selectedGig.author?.name || selectedGig.postedBy?.name}
+                    </Link>
+                  </p>
+                )}
+              </div>
+              <button
+                type="button"
+                onClick={() => setSelectedGig(null)}
+                className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-black/10 text-neutral-600 hover:bg-neutral-100"
+              >
+                ×
+              </button>
+            </div>
 
-                <div className="grid grid-cols-2 gap-4 rounded-lg bg-neutral-50 p-4">
-                  <div className="flex items-center gap-2">
-                    <Coins className="h-5 w-5 text-amber-500" />
-                    <div>
-                      <p className="text-xs text-neutral-500">תגמול</p>
-                      <p className="font-bold">
-                        {selectedGig.price > 0 ? `&#x20AA;${selectedGig.price}` : "ללא תגמול"}
-                      </p>
-                    </div>
-                  </div>
+            <Separator />
 
-                  <div className="flex items-center gap-2">
-                    <Clock className="h-5 w-5 text-blue-500" />
-                    <div>
-                      <p className="text-xs text-neutral-500">פורסם ב</p>
-                      <p className="font-medium">
-                        {selectedGig.createdAt
-                          ? new Date(selectedGig.createdAt).toLocaleDateString("he-IL")
-                          : "—"}
-                      </p>
-                    </div>
-                  </div>
+            {/* Description + Info */}
+            <div className="mt-4 space-y-4 text-sm text-neutral-700">
+              <div className="rounded-xl border border-black/10 bg-neutral-50/70 p-4">
+                <p className="mb-2 text-xs font-semibold text-neutral-600">תיאור החלתורה</p>
+                <p className="leading-relaxed">{selectedGig.description}</p>
+              </div>
 
+              <div className="rounded-xl border border-black/10 p-4">
+                <p className="mb-3 text-xs font-semibold text-neutral-600">מידע נוסף</p>
+                <div className="grid gap-2 sm:grid-cols-2">
                   {selectedGig.location?.city && (
-                    <div className="col-span-2 flex items-center gap-2 border-t pt-2">
-                      <MapPin className="h-5 w-5 text-red-500" />
-                      <div>
-                        <p className="text-xs text-neutral-500">מיקום</p>
-                        <p className="font-medium">
-                          {selectedGig.location.city}
-                          {selectedGig.location.address
-                            ? `, ${selectedGig.location.address}`
-                            : ""}
-                        </p>
-                      </div>
-                    </div>
+                    <p className="flex items-center gap-1">
+                      <MapPin className="h-4 w-4 text-neutral-400" />
+                      <span className="font-medium">עיר:</span> {selectedGig.location.city}
+                    </p>
+                  )}
+                  {selectedGig.location?.address && (
+                    <p><span className="font-medium">כתובת:</span> {selectedGig.location.address}</p>
+                  )}
+                  {selectedGig.createdAt && (
+                    <p><span className="font-medium">פורסם:</span> {new Date(selectedGig.createdAt).toLocaleDateString("he-IL")}</p>
                   )}
                 </div>
-
-                {/* Edit button for owner */}
-                {(() => {
-                  const ownerId = selectedGig.author?._id ?? selectedGig.postedBy?._id;
-                  return user?._id && ownerId && user._id === ownerId ? (
-                    <div className="flex justify-end">
-                      <button
-                        type="button"
-                        onClick={() => { setSelectedGig(null); router.push("/gigs"); }}
-                        className="inline-flex items-center gap-2 rounded-xl border border-white/15 bg-white/5 px-4 py-2 text-sm font-medium text-white backdrop-blur-sm transition hover:bg-white/10"
-                      >
-                        <Pencil className="h-4 w-4" />
-                        עריכת חלתורה
-                      </button>
-                    </div>
-                  ) : null;
-                })()}
+                {selectedGig.tags?.length ? (
+                  <>
+                    <Separator className="my-3" />
+                    <p><span className="font-medium">תגיות:</span> {selectedGig.tags.join(", ")}</p>
+                  </>
+                ) : null}
               </div>
-            </>
-          )}
-        </DialogContent>
-      </Dialog>
+            </div>
+
+            <Separator className="mt-5" />
+
+            <div className="mt-4 flex flex-wrap justify-end gap-2">
+              {user?._id && (selectedGig.author?._id ?? selectedGig.postedBy?._id) === user._id ? (
+                <button
+                  type="button"
+                  onClick={() => { setSelectedGig(null); router.push("/gigs"); }}
+                  className="inline-flex items-center gap-2 rounded-xl border border-black/15 bg-neutral-50 px-4 py-2 text-sm font-medium text-neutral-700 transition hover:bg-neutral-100"
+                >
+                  <Pencil className="h-4 w-4" />
+                  עריכת חלתורה
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => { setSelectedGig(null); router.push("/gigs"); }}
+                  className="rounded-lg bg-emerald-700 px-4 py-2 text-sm font-medium text-white"
+                >
+                  שליחת בקשה
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

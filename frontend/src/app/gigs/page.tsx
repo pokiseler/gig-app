@@ -263,7 +263,7 @@ export default function GigsPage() {
                 <p className="text-xs font-medium tracking-wide text-neutral-500">פרטי חלתורה</p>
                 <h2 className="mt-1 text-2xl font-semibold text-neutral-900">{selectedGig.title}</h2>
                 <p className="mt-1 text-sm text-neutral-500">
-                  {selectedGig.category} · תשלום קבוע: 30 נקודות
+                  {selectedGig.category}
                   {selectedGig.tipAmount && selectedGig.tipAmount > 0 ? (
                     <span className="mr-2 inline-flex items-center rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800">
                       ₪{selectedGig.tipAmount} טיפ ({selectedGig.tipMethod === "bit" ? "Bit" : "מזומן"})

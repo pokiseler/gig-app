@@ -101,6 +101,21 @@ const startServer = async () => {
   try {
     await connectDB();
 
+    // One-time migration: remove legacy balance/escrowBalance fields from user documents.
+    try {
+      const mongoose = require('mongoose');
+      const users = mongoose.connection.db.collection('users');
+      const result = await users.updateMany(
+        { $or: [{ balance: { $exists: true } }, { escrowBalance: { $exists: true } }] },
+        { $unset: { balance: '', escrowBalance: '' } },
+      );
+      if (result.modifiedCount > 0) {
+        logger.info(`Migration: removed balance/escrowBalance from ${result.modifiedCount} user(s).`);
+      }
+    } catch (migrationError) {
+      logger.warn('Migration warning (non-fatal):', migrationError.message);
+    }
+
     app.listen(PORT, '0.0.0.0', () => {
       logger.info(`🚀 Server ready on port ${PORT}`);
     });
