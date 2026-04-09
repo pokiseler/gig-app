@@ -44,7 +44,7 @@ const findApplication = (gig, applicantId) => (
 const normalizeCreatePayload = (payload) => ({
   ...payload,
   postType: 'WANTED',
-  price: GIG_OPENING_COST,
+  price: 0,
   location: {
     city: payload.location.city,
     address: payload.location.address,
@@ -71,22 +71,23 @@ const normalizeUpdatePayload = (payload) => {
   return update;
 };
 
-const toMoney = (value) => Math.round(value * 100) / 100;
+const { runAtomicOperation } = pointsService;
 
-const PLATFORM_FEE_PERCENT = Number(process.env.PLATFORM_FEE_PERCENT || 0);
-  const GIG_OPENING_COST = toMoney(Number(process.env.GIG_OPENING_COST || 30));
-const GIG_COMPLETION_REWARD = toMoney(Number(process.env.GIG_COMPLETION_REWARD || 30));
+const MONTHLY_LIMIT = 4;
 
-const withMaybeSession = (query, session) => (session ? query.session(session) : query);
-const saveWithMaybeSession = (doc, session) => (session ? doc.save({ session }) : doc.save());
-const createWithMaybeSession = (Model, docs, session) => (
-  session ? Model.create(docs, { session }) : Model.create(docs)
-);
-const {
-  runAtomicOperation,
-  openTask,
-  releaseEscrowPayout,
-} = pointsService;
+/**
+ * Returns the effective performedThisMonth count, resetting lazily if the
+ * calendar month has rolled over since lastReset.
+ */
+const getEffectiveMonthlyCount = (usageQuota) => {
+  if (!usageQuota) return 0;
+  const now = new Date();
+  const last = new Date(usageQuota.lastReset);
+  if (last.getFullYear() !== now.getFullYear() || last.getMonth() !== now.getMonth()) {
+    return 0; // month rolled over — treat as reset
+  }
+  return usageQuota.performedThisMonth || 0;
+};
 
 const createGig = async (req, res) => {
   try {
@@ -104,64 +105,31 @@ const createGig = async (req, res) => {
 
     const payload = normalizeCreatePayload(parsed);
 
-    const createdGig = await runAtomicOperation(async (session) => {
-      const posterUser = await openTask({
-        userId: actorUser._id,
-        amount: GIG_OPENING_COST,
-        session,
-      });
-
-      const [gig] = await createWithMaybeSession(Gig, [
-        {
-          title: payload.title,
-          description: payload.description,
-          postType: payload.postType,
-          type: payload.type,
-          category: payload.category,
-          price: payload.price,
-          author: actorUser._id,
-          postedBy: actorUser._id,
-          status: payload.status || 'open',
-          tags: payload.tags,
-          images: payload.images,
-          location: payload.location,
-          geoLocation: payload.geoLocation,
-          tipAmount: payload.tipAmount,
-          tipMethod: payload.tipMethod,
-        },
-      ], session);
-
-      await createWithMaybeSession(Transaction, [
-        {
-          senderId: posterUser._id,
-          receiverId: posterUser._id,
-          gigId: gig._id,
-          amount: GIG_OPENING_COST,
-          type: 'DEPOSIT',
-          status: 'COMPLETED',
-          platformFee: 0,
-          netAmount: GIG_OPENING_COST,
-        },
-      ], session);
-
-      return gig;
+    const createdGig = await Gig.create({
+      title: payload.title,
+      description: payload.description,
+      postType: payload.postType,
+      type: payload.type,
+      category: payload.category,
+      price: payload.price,
+      author: actorUser._id,
+      postedBy: actorUser._id,
+      status: payload.status || 'open',
+      tags: payload.tags,
+      images: payload.images,
+      location: payload.location,
+      geoLocation: payload.geoLocation,
+      tipAmount: payload.tipAmount,
+      tipMethod: payload.tipMethod,
     });
 
     const populatedGig = await Gig.findById(createdGig._id).populate('author', 'name email role averageRating totalReviews');
 
     return res.status(201).json({
-      message: `Gig created successfully. ${GIG_OPENING_COST} points were locked as opening cost.`,
+      message: 'Gig created successfully.',
       gig: mapGigForResponse(populatedGig),
     });
   } catch (error) {
-    if (error.code === 'TRANSACTIONS_UNAVAILABLE') {
-      return res.status(503).json({ message: error.message });
-    }
-
-    if (error.code === 'INSUFFICIENT_BALANCE') {
-      return res.status(400).json({ message: `Opening a gig requires ${GIG_OPENING_COST} points.` });
-    }
-
     console.error('createGig error:', error);
     return res.status(500).json({ message: 'Server error while creating gig.' });
   }
@@ -408,8 +376,16 @@ const requestGigAssignment = async (req, res) => {
       return res.status(400).json({ message: 'Gig id is invalid.' });
     }
 
+    // Quota check before touching the gig
+    const applicantUser = await User.findById(actorUser._id).select('usageQuota').lean();
+    if (getEffectiveMonthlyCount(applicantUser?.usageQuota) >= MONTHLY_LIMIT) {
+      const err = new Error('הגעת למגבלה החודשית של 4 חלתורות.');
+      err.code = 'MONTHLY_LIMIT_REACHED';
+      throw err;
+    }
+
     const responsePayload = await runAtomicOperation(async (session) => {
-      const gig = await withMaybeSession(Gig.findById(id), session);
+      const gig = await (session ? Gig.findById(id).session(session) : Gig.findById(id));
       if (!gig) {
         throw new Error('Gig not found.');
       }
@@ -450,7 +426,7 @@ const requestGigAssignment = async (req, res) => {
         requestedAt: new Date(),
         actedAt: null,
       });
-      await saveWithMaybeSession(gig, session);
+      await (session ? gig.save({ session }) : gig.save());
 
       return {
         gig,
@@ -484,6 +460,10 @@ const requestGigAssignment = async (req, res) => {
       return res.status(404).json({ message: error.message });
     }
 
+    if (error.code === 'MONTHLY_LIMIT_REACHED') {
+      return res.status(403).json({ message: error.message, code: 'MONTHLY_LIMIT_REACHED' });
+    }
+
     if (
       error.message === 'Gig id is invalid.'
       || error.message === 'Gig is not open for applications.'
@@ -513,69 +493,74 @@ const acceptGigApplicant = async (req, res) => {
       return res.status(400).json({ message: 'Gig id or applicant id is invalid.' });
     }
 
-    const result = await runAtomicOperation(async (session) => {
-      const gig = await withMaybeSession(Gig.findById(id), session);
-      if (!gig) {
-        throw new Error('Gig not found.');
-      }
+    const gig = await Gig.findById(id);
+    if (!gig) return res.status(404).json({ message: 'Gig not found.' });
+    if (gig.status !== 'open') return res.status(400).json({ message: 'Gig is not open for applications.' });
 
-      if (gig.status !== 'open') {
-        throw new Error('Gig is not open for applications.');
-      }
+    const gigOwnerId = getGigOwnerId(gig);
+    if (!gigOwnerId || gigOwnerId !== actorUser._id.toString()) {
+      return res.status(400).json({ message: 'Only gig owner can accept applicants.' });
+    }
 
-      const gigOwnerId = getGigOwnerId(gig);
-      if (!gigOwnerId || gigOwnerId !== actorUser._id.toString()) {
-        throw new Error('Only gig owner can accept applicants.');
-      }
+    const targetApplication = findApplication(gig, applicantId);
+    if (!targetApplication || targetApplication.status !== 'REQUESTED') {
+      return res.status(400).json({ message: 'Applicant request not found.' });
+    }
 
-      const targetApplication = findApplication(gig, applicantId);
-      if (!targetApplication || targetApplication.status !== 'REQUESTED') {
-        throw new Error('Applicant request not found.');
-      }
+    const freelancerUser = await User.findById(applicantId).select('name usageQuota');
+    if (!freelancerUser) return res.status(400).json({ message: 'Applicant user was not found.' });
 
-      const freelancerUser = await withMaybeSession(User.findById(applicantId), session);
-      if (!freelancerUser) {
-        throw new Error('Applicant user was not found.');
-      }
-
-      const [paymentTx] = await createWithMaybeSession(Transaction, [
-        {
-          senderId: actorUser._id,
-          receiverId: freelancerUser._id,
-          gigId: gig._id,
-          amount: GIG_COMPLETION_REWARD,
-          type: 'PAYMENT',
-          status: 'PENDING',
-          platformFee: 0,
-          netAmount: GIG_COMPLETION_REWARD,
-        },
-      ], session);
-
-      gig.applications.forEach((entry) => {
-        if (entry.user.toString() === String(applicantId)) {
-          entry.status = 'ACCEPTED';
-          entry.actedAt = new Date();
-        } else if (entry.status === 'REQUESTED') {
-          entry.status = 'DENIED';
-          entry.actedAt = new Date();
-        }
+    // Quota check for the freelancer being accepted
+    if (getEffectiveMonthlyCount(freelancerUser.usageQuota) >= MONTHLY_LIMIT) {
+      return res.status(403).json({
+        message: 'המבצע הגיע למגבלה החודשית של 4 חלתורות.',
+        code: 'MONTHLY_LIMIT_REACHED',
       });
+    }
 
-      gig.client = actorUser._id;
-      gig.freelancer = freelancerUser._id;
-      gig.status = 'in_progress';
-      gig.freelancerConfirmed = false;
-      gig.clientConfirmed = false;
-      gig.escrowAmount = GIG_COMPLETION_REWARD;
-      gig.taskTransaction = paymentTx._id;
-      await saveWithMaybeSession(gig, session);
-
-      return {
-        gig,
-        applicantId: String(freelancerUser._id),
-        gigTitle: gig.title,
-      };
+    gig.applications.forEach((entry) => {
+      if (entry.user.toString() === String(applicantId)) {
+        entry.status = 'ACCEPTED';
+        entry.actedAt = new Date();
+      } else if (entry.status === 'REQUESTED') {
+        entry.status = 'DENIED';
+        entry.actedAt = new Date();
+      }
     });
+    gig.client = actorUser._id;
+    gig.freelancer = freelancerUser._id;
+    gig.status = 'in_progress';
+    gig.freelancerConfirmed = false;
+    gig.clientConfirmed = false;
+    await gig.save();
+
+    // Increment monthly usage counter (lazy-reset if month rolled over)
+    const now = new Date();
+    const last = freelancerUser.usageQuota?.lastReset ? new Date(freelancerUser.usageQuota.lastReset) : new Date(0);
+    const monthRolled = last.getFullYear() !== now.getFullYear() || last.getMonth() !== now.getMonth();
+    await User.findByIdAndUpdate(freelancerUser._id, {
+      $set: { 'usageQuota.lastReset': monthRolled ? now : undefined },
+      $inc: { 'usageQuota.performedThisMonth': monthRolled ? -(freelancerUser.usageQuota?.performedThisMonth || 0) + 1 : 1 },
+    });
+
+    // Log USAGE transaction for admin tracking
+    await Transaction.create({
+      senderId: freelancerUser._id,
+      receiverId: freelancerUser._id,
+      gigId: gig._id,
+      amount: 1,
+      type: 'USAGE',
+      status: 'COMPLETED',
+      platformFee: 0,
+      netAmount: 1,
+      description: `ביצוע חלתורה: ${gig.title}`,
+    });
+
+    const result = {
+      gig,
+      applicantId: String(freelancerUser._id),
+      gigTitle: gig.title,
+    };
 
     const populatedGig = await Gig.findById(result.gig._id)
       .populate('author', 'name role averageRating totalReviews')
@@ -593,24 +578,6 @@ const acceptGigApplicant = async (req, res) => {
       gig: mapGigForResponse(populatedGig),
     });
   } catch (error) {
-    if (error.code === 'TRANSACTIONS_UNAVAILABLE') {
-      return res.status(503).json({ message: error.message });
-    }
-
-    if (error.message === 'Gig not found.') {
-      return res.status(404).json({ message: error.message });
-    }
-
-    if (
-      error.message === 'Gig id or applicant id is invalid.'
-      || error.message === 'Gig is not open for applications.'
-      || error.message === 'Only gig owner can accept applicants.'
-      || error.message === 'Applicant request not found.'
-      || error.message === 'Applicant user was not found.'
-    ) {
-      return res.status(400).json({ message: error.message });
-    }
-
     console.error('acceptGigApplicant error:', error);
     return res.status(500).json({ message: 'Server error while accepting applicant.' });
   }
@@ -746,7 +713,7 @@ const markAsFinished = async (req, res) => {
     }
 
     const payoutResult = await runAtomicOperation(async (session) => {
-      const gig = await withMaybeSession(Gig.findById(id), session);
+      const gig = await (session ? Gig.findById(id).session(session) : Gig.findById(id));
       if (!gig) {
         throw new Error('Gig not found.');
       }
@@ -762,22 +729,11 @@ const markAsFinished = async (req, res) => {
       gig.freelancerConfirmed = true;
 
       if (gig.clientConfirmed) {
-        if (!gig.client || !gig.freelancer) {
-          throw new Error('Task participants are missing.');
-        }
-
-        return releaseEscrowPayout({
-          session,
-          gig,
-          clientUserId: gig.client,
-          freelancerUserId: gig.freelancer,
-          paymentAmount: GIG_COMPLETION_REWARD,
-          freelancerAmount: toMoney(GIG_COMPLETION_REWARD / 2),
-        });
+        gig.status = 'completed';
       }
 
-      await saveWithMaybeSession(gig, session);
-      return null;
+      await (session ? gig.save({ session }) : gig.save());
+      return gig.status === 'completed';
     });
 
     const refreshedGig = await Gig.findById(id)
@@ -787,8 +743,8 @@ const markAsFinished = async (req, res) => {
 
     return res.status(200).json({
       message: payoutResult
-        ? `Both confirmations received. Payment released (${payoutResult.freelancerCredit} points, including ${payoutResult.completionReward} completion reward).`
-        : 'Freelancer confirmation recorded. Waiting for client confirmation.',
+        ? 'שני הצדדים אישרו. החלתורה הושלמה!'
+        : 'אישור המבצע נרשם. ממתין לאישור הלקוח.',
       gig: mapGigForResponse(refreshedGig),
     });
   } catch (error) {
@@ -826,7 +782,7 @@ const confirmReceipt = async (req, res) => {
     }
 
     const payoutResult = await runAtomicOperation(async (session) => {
-      const gig = await withMaybeSession(Gig.findById(id), session);
+      const gig = await (session ? Gig.findById(id).session(session) : Gig.findById(id));
       if (!gig) {
         throw new Error('Gig not found.');
       }
@@ -842,22 +798,11 @@ const confirmReceipt = async (req, res) => {
       gig.clientConfirmed = true;
 
       if (gig.freelancerConfirmed) {
-        if (!gig.client || !gig.freelancer) {
-          throw new Error('Task participants are missing.');
-        }
-
-        return releaseEscrowPayout({
-          session,
-          gig,
-          clientUserId: gig.client,
-          freelancerUserId: gig.freelancer,
-          paymentAmount: GIG_COMPLETION_REWARD,
-          freelancerAmount: toMoney(GIG_COMPLETION_REWARD / 2),
-        });
+        gig.status = 'completed';
       }
 
-      await saveWithMaybeSession(gig, session);
-      return null;
+      await (session ? gig.save({ session }) : gig.save());
+      return gig.status === 'completed';
     });
 
     const refreshedGig = await Gig.findById(id)
@@ -867,8 +812,8 @@ const confirmReceipt = async (req, res) => {
 
     return res.status(200).json({
       message: payoutResult
-        ? `Both confirmations received. Payment released (${payoutResult.freelancerCredit} points, including ${payoutResult.completionReward} completion reward).`
-        : 'Client confirmation recorded. Waiting for freelancer confirmation.',
+        ? 'שני הצדדים אישרו. החלתורה הושלמה!'
+        : 'אישור הלקוח נרשם. ממתין לאישור המבצע.',
       gig: mapGigForResponse(refreshedGig),
     });
   } catch (error) {

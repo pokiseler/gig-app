@@ -1,27 +1,24 @@
 // backend/controllers/adminController.js
 const User = require('../models/User');
 const Gig = require('../models/Gig');
+const Transaction = require('../models/Transaction');
 
 const getDashboardStats = async (req, res) => {
   try {
-    // 1. ספירת כל המשתמשים
     const totalUsers = await User.countDocuments();
-    
-    // 2. ספירת כל החלתורות במערכת
     const totalGigs = await Gig.countDocuments();
 
-    // 3. חישוב כל הכלכלה (כמה נקודות מסתובבות במערכת בסך הכל)
-    const users = await User.find({}, 'balance escrowBalance');
-    let totalEconomyPoints = 0;
-    
-    users.forEach(user => {
-      totalEconomyPoints += (user.balance || 0) + (user.escrowBalance || 0);
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const totalUsageThisMonth = await Transaction.countDocuments({
+      type: 'USAGE',
+      createdAt: { $gte: startOfMonth },
     });
 
     return res.status(200).json({
       totalUsers,
       totalGigs,
-      totalEconomyPoints
+      totalUsageThisMonth,
     });
   } catch (error) {
     console.error('Admin stats error:', error);

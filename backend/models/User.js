@@ -27,15 +27,16 @@ const UserSchema = new mongoose.Schema({
     type: Boolean,
     default: false, // false = regular user, true = verified real user (not a bot)
   },
-  balance: {
-    type: Number,
-    default: 30,
-    min: 0,
-  },
-  escrowBalance: {
-    type: Number,
-    default: 0,
-    min: 0,
+  usageQuota: {
+    performedThisMonth: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+    lastReset: {
+      type: Date,
+      default: Date.now,
+    },
   },
   averageRating: {
     type: Number,

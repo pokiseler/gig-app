@@ -9,8 +9,7 @@ export interface AuthUser {
   role: UserRole;
   phone?: string;
   verified?: boolean;
-  balance?: number;
-  escrowBalance?: number;
+  usageQuota?: { performedThisMonth: number; lastReset: string };
   avatarUrl?: string;
   bio?: string;
   skills?: string[];
@@ -57,8 +56,9 @@ export interface TransactionItem {
   receiverId: string;
   gigId: string;
   amount: number;
-  type: "DEPOSIT" | "PAYMENT" | "ESCROW_RELEASE" | "REFUND";
+  type: "DEPOSIT" | "PAYMENT" | "ESCROW_RELEASE" | "REFUND" | "USAGE";
   status: "PENDING" | "COMPLETED" | "FAILED";
+  description?: string;
   platformFee?: number;
   netAmount?: number;
   createdAt?: string;

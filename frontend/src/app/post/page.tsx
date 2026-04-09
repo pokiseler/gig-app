@@ -90,8 +90,8 @@ export default function PostPage() {
           </CardHeader>
           <CardContent>
             <p className="mb-4 text-sm text-white/60">{titleText}</p>
-            <p className="mb-4 rounded-lg border border-amber-400/30 bg-white/5 px-3 py-2 text-sm text-amber-300">
-              פתיחת חלתורה עולה 30 נקודות. בסיום החלתורה המבצע יקבל 15 נקודות.
+            <p className="mb-4 rounded-lg border border-blue-400/20 bg-white/5 px-3 py-2 text-sm text-blue-300">
+              פרסום חינמי — עד 4 חלתורות בחודש.
             </p>
 
             <form

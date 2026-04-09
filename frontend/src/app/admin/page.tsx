@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import dynamic from "next/dynamic";
-import { Users, Briefcase, Coins, RefreshCw, Trash2 } from "lucide-react";
+import { Users, Briefcase, Activity, RefreshCw, Trash2 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -32,7 +32,7 @@ const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:5000/api";
 interface AdminStats {
   totalUsers: number;
   totalGigs: number;
-  totalEconomyPoints: number;
+  totalUsageThisMonth: number;
 }
 
 interface AdminUser {
@@ -40,7 +40,7 @@ interface AdminUser {
   name: string;
   email: string;
   role: string;
-  balance: number;
+  usageQuota?: { performedThisMonth: number };
 }
 
 interface AdminGig {
@@ -184,7 +184,7 @@ export default function AdminDashboardPage() {
   const statCards = [
     { title: 'סה"כ משתמשים', value: stats?.totalUsers, icon: <Users className="h-5 w-5 text-amber-400" />, bg: "glass-heavy border border-white/10" },
     { title: "חלתורות במערכת", value: stats?.totalGigs, icon: <Briefcase className="h-5 w-5 text-blue-400" />, bg: "glass-heavy border border-white/10" },
-    { title: "כלכלת המערכת (נקודות)", value: stats?.totalEconomyPoints, icon: <Coins className="h-5 w-5 text-emerald-400" />, bg: "glass-heavy border border-white/10" },
+    { title: "שימושים החודש", value: stats?.totalUsageThisMonth, icon: <Activity className="h-5 w-5 text-emerald-400" />, bg: "glass-heavy border border-white/10" },
   ];
 
   return (
@@ -256,7 +256,7 @@ export default function AdminDashboardPage() {
                       <TableHead className="text-right text-white/60">שם</TableHead>
                       <TableHead className="text-right text-white/60">אימייל</TableHead>
                       <TableHead className="text-right text-white/60">תפקיד</TableHead>
-                      <TableHead className="text-right text-white/60">יתרה</TableHead>
+                      <TableHead className="text-right text-white/60">שימושים החודש</TableHead>
                       <TableHead />
                     </TableRow>
                   </TableHeader>
@@ -288,7 +288,7 @@ export default function AdminDashboardPage() {
                               {roleLabel[u.role] ?? u.role}
                             </Badge>
                           </TableCell>
-                          <TableCell className="text-white/80">{(u.balance ?? 0).toLocaleString("he-IL")} נק׳</TableCell>
+                          <TableCell className="text-white/80">{u.usageQuota?.performedThisMonth ?? 0} / 4</TableCell>
                           <TableCell className="text-left">
                             {u.role !== "admin" ? (
                               <button
@@ -322,7 +322,6 @@ export default function AdminDashboardPage() {
                     <TableRow className="border-white/10 bg-white/5 hover:bg-white/5">
                       <TableHead className="text-right text-white/60">כותרת</TableHead>
                       <TableHead className="text-right text-white/60">מפרסם</TableHead>
-                      <TableHead className="text-right text-white/60">תשלום</TableHead>
                       <TableHead className="text-right text-white/60">סטטוס</TableHead>
                       <TableHead />
                     </TableRow>
@@ -331,7 +330,7 @@ export default function AdminDashboardPage() {
                     {gigsLoading ? (
                       Array.from({ length: 4 }).map((_, i) => (
                         <TableRow key={i} className="border-white/5">
-                          {Array.from({ length: 5 }).map((__, j) => (
+                          {Array.from({ length: 4 }).map((__, j) => (
                             <TableCell key={j}>
                               <div className="h-4 animate-pulse rounded bg-white/10 w-24" />
                             </TableCell>
@@ -340,14 +339,14 @@ export default function AdminDashboardPage() {
                       ))
                     ) : gigs.length === 0 ? (
                       <TableRow className="border-white/5">
-                        <TableCell colSpan={5} className="py-8 text-center text-sm text-white/40">אין חלתורות</TableCell>
+                        <TableCell colSpan={4} className="py-8 text-center text-sm text-white/40">אין חלתורות</TableCell>
                       </TableRow>
                     ) : (
                       gigs.map((g) => (
                         <TableRow key={g._id} className="border-white/5 hover:bg-white/5">
                           <TableCell className="font-medium max-w-[200px] truncate text-white">{g.title}</TableCell>
                           <TableCell className="text-white/60">{g.author?.name ?? "—"}</TableCell>
-                          <TableCell className="text-white/80">30 נק׳</TableCell>
+
                           <TableCell>
                             <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${statusColor[g.status] ?? "bg-white/10 text-white/50"}`}>
                               {statusLabel[g.status] ?? g.status}

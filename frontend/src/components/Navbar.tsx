@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   Menu, X, Bell, Home, Briefcase, PlusCircle,
-  ClipboardList, User, LogOut, LogIn, ShieldCheck, Coins, MessageSquare,
+  ClipboardList, User, LogOut, LogIn, ShieldCheck, MessageSquare,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useSSE } from "@/hooks/useSSE";
@@ -235,12 +235,6 @@ export function Navbar() {
                   <span className="hidden max-w-[100px] truncate text-xs text-white/40 lg:inline">
                     {user?.name}
                   </span>
-                  {typeof user?.balance === "number" && (
-                    <span className="hidden items-center gap-1 rounded-full border border-amber-400/30 bg-amber-400/10 px-2 py-0.5 text-xs font-semibold text-amber-300 lg:inline-flex">
-                      <Coins className="h-3 w-3" />
-                      {user.balance.toLocaleString("he-IL")}
-                    </span>
-                  )}
                   <button
                     type="button"
                     onClick={handleSignOut}

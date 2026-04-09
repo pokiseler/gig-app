@@ -5,7 +5,7 @@ import Image from "next/image";
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import dynamic from "next/dynamic";
-import { Coins, Star } from "lucide-react";
+import { Star } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { getUserProfile, createReview, type GigItem, type ReviewItem, type AuthUser } from "@/services/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -135,12 +135,6 @@ export default function UserProfilePage() {
                   <Badge className="inline-flex items-center gap-1 bg-amber-400/15 text-amber-300 border border-amber-400/30">
                     ⭐ {(user.averageRating || 0).toFixed(1)} ({user.totalReviews || 0})
                   </Badge>
-                  {typeof user.balance === "number" && (
-                    <Badge className="inline-flex items-center gap-1 border border-amber-400/30 bg-amber-400/10 text-amber-300">
-                      <Coins className="h-3.5 w-3.5" />
-                      {user.balance.toLocaleString("he-IL")} נקודות
-                    </Badge>
-                  )}
                   {isOwner ? (
                     <Link
                       href="/profile/edit"
@@ -164,7 +158,6 @@ export default function UserProfilePage() {
                     {requests.map((gig) => (
                       <div key={gig._id} className="rounded-xl border border-white/10 bg-white/5 p-3">
                         <p className="font-medium text-white">{gig.title}</p>
-                        <p className="text-sm text-white/50">30 נקודות</p>
                       </div>
                     ))}
                     {requests.length === 0 ? <p className="text-sm text-white/40">אין כרגע בקשות פעילות.</p> : null}
