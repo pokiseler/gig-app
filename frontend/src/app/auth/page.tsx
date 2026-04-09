@@ -37,7 +37,7 @@ export default function AuthPage() {
 
   useEffect(() => {
     if (isAuthenticated) {
-      router.replace("/gigs");
+      router.replace("/"); // שינוי לניתוב לדף הבית
     }
   }, [isAuthenticated, router]);
 
@@ -62,7 +62,7 @@ export default function AuthPage() {
         await signIn(data as LoginFields);
       }
 
-      router.replace("/gigs");
+      router.replace("/"); // שינוי לניתוב לדף הבית
     } catch (error) {
       setServerMessage(error instanceof Error ? error.message : "בקשת ההתחברות נכשלה");
     }
