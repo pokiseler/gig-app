@@ -28,6 +28,7 @@ export function Navbar() {
   const [bellOpen, setBellOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [busyRequestKey, setBusyRequestKey] = useState("");
+  const [requestError, setRequestError] = useState("");
   const [unreadMsgCount, setUnreadMsgCount] = useState(0);
   const prevNotifCountRef = useRef(0);
 
@@ -83,14 +84,16 @@ export function Navbar() {
     if (!token) return;
     const key = `${req.gigId}:${req.applicantId}:accept`;
     setBusyRequestKey(key);
+    setRequestError("");
     try {
       await acceptGigRequest(token, req.gigId, req.applicantId);
-      setPendingRequests((prev) =>
-        prev.filter((r) => !(r.gigId === req.gigId && r.applicantId === req.applicantId)),
-      );
+      // Remove ALL applicants for this gig — server auto-denies co-applicants
+      setPendingRequests((prev) => prev.filter((r) => r.gigId !== req.gigId));
       // Auto-open chat with the accepted applicant
       openChat(req.applicantId, req.applicantName);
       setBellOpen(false);
+    } catch (err) {
+      setRequestError(err instanceof Error ? err.message : "אישור הבקשה נכשל");
     } finally { setBusyRequestKey(""); }
   };
 
@@ -98,11 +101,23 @@ export function Navbar() {
     if (!token) return;
     const key = `${req.gigId}:${req.applicantId}:deny`;
     setBusyRequestKey(key);
+    setRequestError("");
     try {
       await denyGigRequest(token, req.gigId, req.applicantId);
       setPendingRequests((prev) =>
         prev.filter((r) => !(r.gigId === req.gigId && r.applicantId === req.applicantId)),
       );
+    } catch (err) {
+      // If the applicant was already auto-denied (e.g. another applicant was accepted),
+      // silently remove them from the list instead of showing a confusing error.
+      const msg = err instanceof Error ? err.message : "";
+      if (msg.includes("not found") || msg.includes("not open")) {
+        setPendingRequests((prev) =>
+          prev.filter((r) => !(r.gigId === req.gigId && r.applicantId === req.applicantId)),
+        );
+      } else {
+        setRequestError(msg || "דחיית הבקשה נכשלה");
+      }
     } finally { setBusyRequestKey(""); }
   };
 
@@ -201,6 +216,9 @@ export function Navbar() {
                             ניקוי
                           </button>
                         </div>
+                        {requestError && (
+                          <p className="mb-2 rounded-lg bg-red-500/15 border border-red-400/20 px-2.5 py-1.5 text-xs text-red-300">{requestError}</p>
+                        )}
                         <div className="max-h-72 space-y-2 overflow-y-auto">
                           {pendingRequests.map((req) => {
                             const aKey = `${req.gigId}:${req.applicantId}:accept`;
@@ -306,6 +324,9 @@ export function Navbar() {
             <p className="text-sm font-semibold text-white">התראות</p>
             <button type="button" onClick={() => { dismissAll(); setBellOpen(false); }} className="text-xs text-white/50 hover:text-white">ניקוי</button>
           </div>
+          {requestError && (
+            <p className="mb-2 rounded-lg bg-red-500/15 border border-red-400/20 px-2.5 py-1.5 text-xs text-red-300">{requestError}</p>
+          )}
           <div className="max-h-60 space-y-2 overflow-y-auto">
             {pendingRequests.map((req) => {
               const aKey = `${req.gigId}:${req.applicantId}:accept`;

@@ -376,6 +376,15 @@ const requestGigAssignment = async (req, res) => {
       return res.status(400).json({ message: 'Gig id is invalid.' });
     }
 
+    // Block users who have already reached their monthly completion limit
+    const freshUser = await User.findById(actorUser._id).select('usageQuota');
+    if (freshUser && getEffectiveMonthlyCount(freshUser.usageQuota) >= MONTHLY_LIMIT) {
+      return res.status(403).json({
+        message: 'הגעת למגבלה החודשית של 4 חלתורות. תוכל לשלוח בקשות חדשות בחודש הבא.',
+        code: 'MONTHLY_LIMIT_REACHED',
+      });
+    }
+
     const responsePayload = await runAtomicOperation(async (session) => {
       const gig = await (session ? Gig.findById(id).session(session) : Gig.findById(id));
       if (!gig) {

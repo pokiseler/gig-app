@@ -113,6 +113,12 @@ export default function GigsPage() {
       return;
     }
 
+    // Block if user has reached the monthly completion limit
+    if (user?.usageQuota && user.usageQuota.performedThisMonth >= 4) {
+      setModalError("הגעת למגבלה החודשית של 4 חלתורות. תוכל לשלוח בקשות חדשות בחודש הבא.");
+      return;
+    }
+
     setModalBusy(true);
     setModalError("");
 
@@ -243,163 +249,166 @@ export default function GigsPage() {
 
       {selectedGig ? (
         <div
-          className={`fixed inset-0 z-[60] flex items-center justify-center p-4 transition-colors duration-150 ${
-            modalEntered ? "bg-black/40" : "bg-black/0"
+          className={`fixed inset-0 z-[60] flex items-end justify-center p-0 sm:items-center sm:p-4 transition-colors duration-200 ${
+            modalEntered ? "bg-black/60 backdrop-blur-sm" : "bg-black/0"
           }`}
           onClick={(event) => {
-            if (event.target === event.currentTarget) {
-              closeGigModal();
-            }
+            if (event.target === event.currentTarget) closeGigModal();
           }}
         >
           <div
-            className={`w-full max-w-2xl rounded-2xl border border-black/10 bg-white p-5 shadow-2xl transition-all duration-150 sm:p-6 ${
-              modalEntered ? "translate-y-0 scale-100 opacity-100" : "translate-y-2 scale-[0.98] opacity-0"
+            className={`w-full max-w-2xl overflow-hidden rounded-t-3xl sm:rounded-2xl bg-[#0f1117] border border-white/10 shadow-2xl transition-all duration-200 ${
+              modalEntered ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"
             }`}
             dir="rtl"
           >
-            <div className="mb-4 flex items-start justify-between gap-4">
-              <div>
-                <p className="text-xs font-medium tracking-wide text-neutral-500">פרטי חלתורה</p>
-                <h2 className="mt-1 text-2xl font-semibold text-neutral-900">{selectedGig.title}</h2>
-                <p className="mt-1 text-sm text-neutral-500">
-                  {selectedGig.category}
-                  {selectedGig.tipAmount && selectedGig.tipAmount > 0 ? (
-                    <span className="mr-2 inline-flex items-center rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800">
-                      ₪{selectedGig.tipAmount} טיפ ({selectedGig.tipMethod === "bit" ? "Bit" : "מזומן"})
-                    </span>
-                  ) : null}
-                </p>
-                {(selectedGig.author || selectedGig.postedBy) && (
-                  <p className="mt-1 text-xs text-neutral-400">
-                    מאת{" "}
-                    <Link
-                      href={`/users/${selectedGig.author?._id || selectedGig.postedBy?._id}`}
-                      className="hover:underline"
-                    >
-                      {selectedGig.author?.name || selectedGig.postedBy?.name}
-                    </Link>
-                  </p>
-                )}
-              </div>
+            {/* Header band */}
+            <div className="relative bg-gradient-to-l from-blue-600/20 to-indigo-600/10 px-6 pt-6 pb-5 border-b border-white/8">
               <button
                 type="button"
                 onClick={closeGigModal}
-                className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-black/10 text-neutral-600 hover:bg-neutral-100"
+                className="absolute left-4 top-4 inline-flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-white/60 hover:bg-white/20 hover:text-white transition text-lg leading-none"
               >
                 ×
               </button>
+
+              <span className="mb-2 inline-block rounded-full bg-blue-500/20 px-2.5 py-0.5 text-xs font-medium text-blue-300 border border-blue-400/20">
+                בקשה
+              </span>
+              <h2 className="text-xl font-bold text-white leading-snug">{selectedGig.title}</h2>
+
+              <div className="mt-2 flex flex-wrap items-center gap-2">
+                {selectedGig.category && (
+                  <span className="rounded-full bg-white/10 px-2.5 py-0.5 text-xs text-white/70 border border-white/10">
+                    {selectedGig.category}
+                  </span>
+                )}
+                {selectedGig.tipAmount && selectedGig.tipAmount > 0 ? (
+                  <span className="rounded-full bg-emerald-500/20 px-2.5 py-0.5 text-xs font-medium text-emerald-300 border border-emerald-400/20">
+                    ₪{selectedGig.tipAmount} טיפ · {selectedGig.tipMethod === "bit" ? "Bit" : "מזומן"}
+                  </span>
+                ) : null}
+                {selectedGig.location?.city && (
+                  <span className="rounded-full bg-white/8 px-2.5 py-0.5 text-xs text-white/50 border border-white/8">
+                    📍 {selectedGig.location.city}
+                  </span>
+                )}
+              </div>
+
+              {(selectedGig.author || selectedGig.postedBy) && (
+                <p className="mt-3 text-xs text-white/40">
+                  פורסם על ידי{" "}
+                  <Link
+                    href={`/users/${selectedGig.author?._id || selectedGig.postedBy?._id}`}
+                    className="text-blue-400/80 hover:text-blue-300 hover:underline"
+                  >
+                    {selectedGig.author?.name || selectedGig.postedBy?.name}
+                  </Link>
+                  {selectedGig.createdAt && (
+                    <span className="mr-2 text-white/30">
+                      · {new Date(selectedGig.createdAt).toLocaleDateString("he-IL")}
+                    </span>
+                  )}
+                </p>
+              )}
             </div>
 
-            <Separator />
-
-            {isEditMode ? (
-              <div className="mt-4 space-y-4">
-                <div className="rounded-xl border border-black/10 bg-neutral-50/70 p-4">
-                  <p className="mb-3 text-xs font-semibold text-neutral-600">עריכת תוכן</p>
+            {/* Body */}
+            <div className="max-h-[55vh] overflow-y-auto px-6 py-5 space-y-4">
+              {isEditMode ? (
+                <>
                   <div className="space-y-3">
                     <input
-                      className="w-full rounded-lg border border-black/15 bg-white px-3 py-2 text-sm"
+                      className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-blue-500/50"
                       value={editForm.title}
-                      onChange={(event) => setEditForm((prev) => ({ ...prev, title: event.target.value }))}
+                      onChange={(e) => setEditForm((prev) => ({ ...prev, title: e.target.value }))}
                       placeholder="כותרת"
                     />
                     <textarea
-                      className="min-h-28 w-full rounded-lg border border-black/15 bg-white px-3 py-2 text-sm"
+                      className="min-h-28 w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-blue-500/50"
                       value={editForm.description}
-                      onChange={(event) => setEditForm((prev) => ({ ...prev, description: event.target.value }))}
+                      onChange={(e) => setEditForm((prev) => ({ ...prev, description: e.target.value }))}
                       placeholder="תיאור"
                     />
                   </div>
-                </div>
-
-                <div className="rounded-xl border border-black/10 bg-neutral-50/70 p-4">
-                  <p className="mb-3 text-xs font-semibold text-neutral-600">פרטי עבודה</p>
                   <div className="grid gap-3 sm:grid-cols-2">
                     <input
-                      className="w-full rounded-lg border border-black/15 bg-white px-3 py-2 text-sm"
+                      className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-blue-500/50"
                       value={editForm.category}
-                      onChange={(event) => setEditForm((prev) => ({ ...prev, category: event.target.value }))}
+                      onChange={(e) => setEditForm((prev) => ({ ...prev, category: e.target.value }))}
                       placeholder="קטגוריה"
                     />
                     <input
-                      className="w-full rounded-lg border border-black/15 bg-white px-3 py-2 text-sm"
+                      className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-blue-500/50"
                       value={editForm.city}
-                      onChange={(event) => setEditForm((prev) => ({ ...prev, city: event.target.value }))}
+                      onChange={(e) => setEditForm((prev) => ({ ...prev, city: e.target.value }))}
                       placeholder="עיר"
                     />
                     <input
-                      className="w-full rounded-lg border border-black/15 bg-white px-3 py-2 text-sm"
+                      className="col-span-full w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-blue-500/50"
                       value={editForm.address}
-                      onChange={(event) => setEditForm((prev) => ({ ...prev, address: event.target.value }))}
+                      onChange={(e) => setEditForm((prev) => ({ ...prev, address: e.target.value }))}
                       placeholder="כתובת"
                     />
+                    <input
+                      className="col-span-full w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-blue-500/50"
+                      value={editForm.tags}
+                      onChange={(e) => setEditForm((prev) => ({ ...prev, tags: e.target.value }))}
+                      placeholder="תגיות (מופרדות בפסיקים)"
+                    />
                   </div>
-                  <input
-                    className="mt-3 w-full rounded-lg border border-black/15 bg-white px-3 py-2 text-sm"
-                    value={editForm.tags}
-                    onChange={(event) => setEditForm((prev) => ({ ...prev, tags: event.target.value }))}
-                    placeholder="תגיות (מופרדות בפסיקים)"
-                  />
-                </div>
-              </div>
-            ) : (
-              <div className="mt-4 space-y-4 text-sm text-neutral-700">
-                <div className="rounded-xl border border-black/10 bg-neutral-50/70 p-4">
-                  <p className="mb-2 text-xs font-semibold text-neutral-600">תיאור החלתורה</p>
-                  <p className="leading-relaxed">{selectedGig.description}</p>
-                </div>
+                </>
+              ) : (
+                <>
+                  <div className="rounded-xl bg-white/5 border border-white/8 p-4">
+                    <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-white/40">תיאור</p>
+                    <p className="text-sm leading-relaxed text-white/80 whitespace-pre-wrap">{selectedGig.description}</p>
+                  </div>
 
-                <div className="rounded-xl border border-black/10 p-4">
-                  <p className="mb-3 text-xs font-semibold text-neutral-600">מידע נוסף</p>
-                  <div className="grid gap-2 sm:grid-cols-2">
-                    <p><span className="font-medium">סטטוס:</span> {selectedGig.status}</p>
-                    <p>
-                      <span className="font-medium">מפרסם:</span>{" "}
-                      {(selectedGig.author || selectedGig.postedBy) ? (
-                        <Link
-                          href={`/users/${selectedGig.author?._id || selectedGig.postedBy?._id}`}
-                          className="underline hover:text-neutral-600"
-                          onClick={() => setSelectedGig(null)}
-                        >
-                          {selectedGig.author?.name || selectedGig.postedBy?.name}
-                        </Link>
-                      ) : "-"}
-                    </p>
-                    <p><span className="font-medium">עיר:</span> {selectedGig.location?.city || "-"}</p>
-                    <p><span className="font-medium">כתובת:</span> {selectedGig.location?.address || "-"}</p>
-                  </div>
-                  {selectedGig.tags?.length ? (
-                    <>
-                      <Separator className="my-3" />
-                      <p><span className="font-medium">תגיות:</span> {selectedGig.tags.join(", ")}</p>
-                    </>
+                  {(selectedGig.location?.address || selectedGig.tags?.length) ? (
+                    <div className="rounded-xl bg-white/5 border border-white/8 p-4 space-y-2 text-sm">
+                      {selectedGig.location?.address && (
+                        <p className="text-white/60">
+                          <span className="font-medium text-white/80">כתובת:</span> {selectedGig.location.address}
+                        </p>
+                      )}
+                      {selectedGig.tags?.length ? (
+                        <div className="flex flex-wrap gap-1.5 pt-1">
+                          {selectedGig.tags.map((tag) => (
+                            <span key={tag} className="rounded-full bg-white/8 px-2 py-0.5 text-xs text-white/50 border border-white/8">
+                              #{tag}
+                            </span>
+                          ))}
+                        </div>
+                      ) : null}
+                    </div>
                   ) : null}
-                </div>
-              </div>
-            )}
+                </>
+              )}
 
-            {modalError ? <p className="mt-4 text-sm text-red-700">{modalError}</p> : null}
+              {modalError ? (
+                <p className="rounded-xl bg-red-500/10 border border-red-500/20 p-3 text-sm text-red-400">{modalError}</p>
+              ) : null}
+            </div>
 
-            <Separator className="mt-5" />
-
-            <div className="mt-4 flex flex-wrap justify-end gap-2">
+            {/* Footer actions */}
+            <div className="flex flex-wrap items-center justify-end gap-2 border-t border-white/8 bg-white/3 px-6 py-4">
               {isOwnGig ? (
                 isEditMode ? (
                   <>
                     <button
                       type="button"
                       onClick={() => setIsEditMode(false)}
-                      className="rounded-lg border border-black/15 px-4 py-2 text-sm font-medium"
                       disabled={modalBusy}
+                      className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-white/70 hover:bg-white/10 transition disabled:opacity-50"
                     >
                       ביטול
                     </button>
                     <button
                       type="button"
                       onClick={handleSaveEdit}
-                      className="rounded-lg bg-black px-4 py-2 text-sm font-medium text-white"
                       disabled={modalBusy}
+                      className="rounded-xl bg-gradient-to-l from-blue-600 to-blue-500 px-5 py-2 text-sm font-semibold text-white shadow-lg shadow-blue-900/30 hover:opacity-90 transition disabled:opacity-50"
                     >
                       {modalBusy ? "שומר..." : "שמירת שינויים"}
                     </button>
@@ -409,16 +418,16 @@ export default function GigsPage() {
                     <button
                       type="button"
                       onClick={() => setIsEditMode(true)}
-                      className="inline-flex items-center gap-2 rounded-xl border border-white/15 bg-white/5 px-4 py-2 text-sm font-medium text-white backdrop-blur-sm transition hover:bg-white/10"
+                      className="inline-flex items-center gap-1.5 rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-white/80 hover:bg-white/10 transition"
                     >
-                      <Pencil className="h-4 w-4" />
-                      עריכת חלתורה
+                      <Pencil className="h-3.5 w-3.5" />
+                      עריכה
                     </button>
                     <button
                       type="button"
                       onClick={handleDelete}
-                      className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white"
                       disabled={modalBusy}
+                      className="rounded-xl bg-red-600/80 px-4 py-2 text-sm font-medium text-white hover:bg-red-600 transition disabled:opacity-50"
                     >
                       {modalBusy ? "מוחק..." : "מחיקה"}
                     </button>
@@ -429,7 +438,7 @@ export default function GigsPage() {
                   type="button"
                   onClick={handleAccept}
                   disabled={!canAccept || modalBusy}
-                  className="rounded-lg bg-emerald-700 px-4 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-60"
+                  className="rounded-xl bg-gradient-to-l from-emerald-600 to-emerald-500 px-6 py-2 text-sm font-semibold text-white shadow-lg shadow-emerald-900/30 hover:opacity-90 transition disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {modalBusy ? "מעבד..." : "שליחת בקשה"}
                 </button>
