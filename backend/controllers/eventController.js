@@ -7,9 +7,10 @@ const { addConnection, removeConnection } = require('../events/sseManager');
  * EventSource does not support custom headers in the browser.
  */
 const subscribe = (req, res) => {
-  res.setHeader('Content-Type', 'text/event-stream');
-  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Content-Type', 'text/event-stream; charset=utf-8');
+  res.setHeader('Cache-Control', 'no-cache, no-transform');
   res.setHeader('Connection', 'keep-alive');
+  res.setHeader('X-Accel-Buffering', 'no');
   res.flushHeaders();
 
   const userId = String(req.user._id);

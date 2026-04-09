@@ -14,6 +14,9 @@ export interface SSENotification {
 const SSE_BASE: string = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:5000/api")
   .replace(/\/api\/?$/, "");
 
+const RECONNECT_INIT_MS = 2_000;
+const RECONNECT_MAX_MS  = 30_000;
+
 export function useSSE(token: string | null) {
   const [notifications, setNotifications] = useState<SSENotification[]>([]);
   const esRef = useRef<EventSource | null>(null);
@@ -21,18 +24,20 @@ export function useSSE(token: string | null) {
   useEffect(() => {
     if (!token) return;
 
-    const es = new EventSource(`${SSE_BASE}/api/events?token=${encodeURIComponent(token)}`);
-    esRef.current = es;
+    let cancelled = false;
+    let retryDelay = RECONNECT_INIT_MS;
+    let retryTimer: ReturnType<typeof setTimeout> | null = null;
+    let es: EventSource | null = null;
 
     const handleEvent = (event: MessageEvent, name: string) => {
       try {
-        const data = JSON.parse(event.data);
+        const data = JSON.parse(event.data) as Record<string, unknown>;
         queueMicrotask(() =>
           setNotifications((prev) => [
             {
               id: `${name}-${Date.now()}`,
               event: name,
-              message: data.message ?? name,
+              message: typeof data.message === "string" ? data.message : name,
               timestamp: Date.now(),
             },
             ...prev.slice(0, 19), // keep at most 20
@@ -43,16 +48,42 @@ export function useSSE(token: string | null) {
       }
     };
 
-    es.addEventListener("new_review", (e) => handleEvent(e as MessageEvent, "new_review"));
-    es.addEventListener("new_gig",    (e) => handleEvent(e as MessageEvent, "new_gig"));
-    es.addEventListener("gig_request", (e) => handleEvent(e as MessageEvent, "gig_request"));
-    es.addEventListener("gig_request_accepted", (e) => handleEvent(e as MessageEvent, "gig_request_accepted"));
-    es.addEventListener("gig_request_denied", (e) => handleEvent(e as MessageEvent, "gig_request_denied"));
-    es.addEventListener("new_message", (e) => handleEvent(e as MessageEvent, "new_message"));
+    function connect() {
+      if (cancelled) return;
+
+      es = new EventSource(`${SSE_BASE}/api/events?token=${encodeURIComponent(token!)}`);
+      esRef.current = es;
+
+      es.onopen = () => {
+        // Connection (re-)established — reset backoff.
+        retryDelay = RECONNECT_INIT_MS;
+      };
+
+      es.onerror = () => {
+        if (cancelled) return;
+        es?.close();
+        esRef.current = null;
+        // Exponential backoff before reconnecting.
+        const delay = retryDelay;
+        retryDelay = Math.min(delay * 2, RECONNECT_MAX_MS);
+        retryTimer = setTimeout(connect, delay);
+      };
+
+      es.addEventListener("new_review",           (e) => handleEvent(e as MessageEvent, "new_review"));
+      es.addEventListener("new_gig",              (e) => handleEvent(e as MessageEvent, "new_gig"));
+      es.addEventListener("gig_request",          (e) => handleEvent(e as MessageEvent, "gig_request"));
+      es.addEventListener("gig_request_accepted", (e) => handleEvent(e as MessageEvent, "gig_request_accepted"));
+      es.addEventListener("gig_request_denied",   (e) => handleEvent(e as MessageEvent, "gig_request_denied"));
+      es.addEventListener("new_message",          (e) => handleEvent(e as MessageEvent, "new_message"));
+    }
+
+    connect();
 
     return () => {
-      es.close();
+      cancelled = true;
+      es?.close();
       esRef.current = null;
+      if (retryTimer !== null) clearTimeout(retryTimer);
     };
   }, [token]);
 
