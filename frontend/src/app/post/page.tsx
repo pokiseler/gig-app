@@ -25,8 +25,6 @@ const postFormSchema = z.object({
   city:        z.string().trim().min(2,  "יש להזין עיר"),
   address:     z.string().trim().min(2,  "יש להזין כתובת"),
   tags:        z.string().trim().optional(),
-  tipAmount:   z.number().min(0, "הסכום לא יכול להיות שלילי").max(10000).optional(),
-  tipMethod:   z.enum(["cash", "bit"]).optional(),
 });
 
 type PostFormFields = z.infer<typeof postFormSchema>;
@@ -36,7 +34,6 @@ export default function PostPage() {
   const postType = "WANTED" as const;
   const [serverMessage, setServerMessage] = useState("");
   const [isPostError, setIsPostError] = useState(false);
-  const titleText = "אני מחפש/ת שירות";
 
   const {
     register,
@@ -46,7 +43,7 @@ export default function PostPage() {
     reset,
   } = useForm<PostFormFields>({
     resolver: zodResolver(postFormSchema),
-    defaultValues: { category: "", city: "", tipAmount: 0, tipMethod: "cash" as const },
+    defaultValues: { category: "", city: "" },
   });
 
   const onSubmit = async (data: PostFormFields) => {
@@ -67,8 +64,6 @@ export default function PostPage() {
         location: { city: data.city, address: data.address },
         tags,
         status: "open",
-        tipAmount: data.tipAmount ?? 0,
-        tipMethod: data.tipMethod ?? "cash",
       });
       setIsPostError(false);
       setServerMessage("הפוסט פורסם בהצלחה! מעביר לשוק...");
@@ -89,11 +84,6 @@ export default function PostPage() {
             <CardTitle className="text-xl font-bold text-white">יצירת פוסט חדש</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="mb-4 text-sm text-white/60">{titleText}</p>
-            <p className="mb-4 rounded-lg border border-blue-400/20 bg-white/5 px-3 py-2 text-sm text-blue-300">
-              פרסום חינמי — עד 4 חלתורות בחודש.
-            </p>
-
             <form
               className="space-y-4"
               onSubmit={handleSubmit(onSubmit)}
@@ -108,43 +98,6 @@ export default function PostPage() {
                 <Label className="mb-1 block">תיאור</Label>
                 <Textarea {...register("description")} rows={5} />
                 {errors.description && <p className="mt-1 text-xs text-red-600">{errors.description.message}</p>}
-              </div>
-
-              <div className="rounded-lg border border-amber-400/20 bg-white/5 p-4 grid gap-4 sm:grid-cols-2">
-                <div>
-                  <Label className="mb-1 block">טיפ ב-₪ <span className="font-normal text-neutral-500">(אופציונלי)</span></Label>
-                  <Input
-                    type="number"
-                    min={0}
-                    step={1}
-                    placeholder="0"
-                    {...register("tipAmount", { valueAsNumber: true })}
-                  />
-                  {errors.tipAmount && <p className="mt-1 text-xs text-red-600">{errors.tipAmount.message}</p>}
-                </div>
-                <div>
-                  <Label className="mb-1 block">אמצעי תשלום</Label>
-                  <Controller
-                    control={control}
-                    name="tipMethod"
-                    render={({ field }) => (
-                      <Select
-                        value={field.value ?? "cash"}
-                        onValueChange={(value) => field.onChange(value)}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="בחר אמצעי">
-                            {(field.value ?? "cash") === "bit" ? "Bit" : "מזומן"}
-                          </SelectValue>
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="cash">מזומן</SelectItem>
-                          <SelectItem value="bit">Bit</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    )}
-                  />
-                </div>
               </div>
 
               <div>
