@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -13,6 +13,7 @@ import { useChat } from "@/context/ChatContext";
 import {
   acceptGigRequest,
   denyGigRequest,
+  getChatThreads,
   getMyGigRequests,
   type GigRequestItem,
 } from "@/services/api";
@@ -27,6 +28,8 @@ export function Navbar() {
   const [bellOpen, setBellOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [busyRequestKey, setBusyRequestKey] = useState("");
+  const [unreadMsgCount, setUnreadMsgCount] = useState(0);
+  const prevNotifCountRef = useRef(0);
 
   const closeAll = () => {
     setBellOpen(false);
@@ -51,6 +54,25 @@ export function Navbar() {
   useEffect(() => {
     if (notifications.some((n) => n.event === "gig_request")) void loadRequests();
   }, [notifications, loadRequests]);
+
+  // Load initial unread message count from DB
+  useEffect(() => {
+    if (!token || !isAuthenticated) { setUnreadMsgCount(0); return; }
+    getChatThreads(token)
+      .then((res) => {
+        const total = res.threads.reduce((sum, t) => sum + (t.unread || 0), 0);
+        setUnreadMsgCount(total);
+      })
+      .catch(() => { /* network error — badge stays at 0 */ });
+  }, [token, isAuthenticated]);
+
+  // Increment unread count for each new_message SSE event
+  useEffect(() => {
+    const newItems = notifications.slice(prevNotifCountRef.current);
+    prevNotifCountRef.current = notifications.length;
+    const count = newItems.filter((n) => n.event === "new_message").length;
+    if (count > 0) setUnreadMsgCount((v) => v + count);
+  }, [notifications]);
 
   const totalBellCount = useMemo(
     () => pendingRequests.length + notifications.length,
@@ -122,7 +144,15 @@ export function Navbar() {
           {isAuthenticated && (
             <>
               <Link href="/tasks" className={navLink}><ClipboardList className="h-4 w-4" />משימות</Link>
-              <Link href="/messages" className={navLink}><MessageSquare className="h-4 w-4" />הודעות</Link>
+              <Link href="/messages" onClick={() => setUnreadMsgCount(0)} className={`relative ${navLink}`}>
+                <MessageSquare className="h-4 w-4" />
+                הודעות
+                {unreadMsgCount > 0 && (
+                  <span className="absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
+                    {unreadMsgCount > 9 ? "9+" : unreadMsgCount}
+                  </span>
+                )}
+              </Link>
             </>
           )}
           {!loading && (
@@ -160,7 +190,7 @@ export function Navbar() {
                     </button>
 
                     {bellOpen && (
-                      <div className="glass-heavy absolute left-0 z-50 mt-2 w-80 rounded-2xl p-3">
+                      <div className="glass-heavy absolute left-0 z-50 mt-2 w-80 max-w-[calc(100vw-2rem)] rounded-2xl p-3">
                         <div className="mb-2 flex items-center justify-between">
                           <p className="text-sm font-semibold text-white">התראות</p>
                           <button
@@ -179,10 +209,10 @@ export function Navbar() {
                               <div key={`${req.gigId}:${req.applicantId}`} className="rounded-xl border border-white/10 bg-white/5 p-2.5">
                                 <p className="text-xs font-medium text-white"><Link href={`/users/${req.applicantId}`} onClick={closeAll} className="text-blue-300 hover:underline">{req.applicantName}</Link> רוצה לבצע: {req.gigTitle}</p>
                                 <div className="mt-2 flex gap-2">
-                                  <button type="button" onClick={() => handleAcceptRequest(req)} disabled={busyRequestKey === aKey || busyRequestKey === dKey} className="rounded-lg bg-emerald-600 px-2.5 py-1 text-xs font-medium text-white disabled:opacity-50">
+                                  <button type="button" onClick={() => handleAcceptRequest(req)} disabled={busyRequestKey === aKey || busyRequestKey === dKey} className="rounded-lg bg-emerald-600 px-2.5 py-2 text-xs font-medium text-white disabled:opacity-50">
                                     {busyRequestKey === aKey ? "מאשר..." : "אישור"}
                                   </button>
-                                  <button type="button" onClick={() => handleDenyRequest(req)} disabled={busyRequestKey === aKey || busyRequestKey === dKey} className="rounded-lg border border-white/15 px-2.5 py-1 text-xs font-medium text-white/70 disabled:opacity-50">
+                                  <button type="button" onClick={() => handleDenyRequest(req)} disabled={busyRequestKey === aKey || busyRequestKey === dKey} className="rounded-lg border border-white/15 px-2.5 py-2 text-xs font-medium text-white/70 disabled:opacity-50">
                                     {busyRequestKey === dKey ? "דוחה..." : "דחייה"}
                                   </button>
                                 </div>
@@ -233,21 +263,36 @@ export function Navbar() {
           )}
         </nav>
 
-        {/* ── Mobile: bell + hamburger ── */}
+        {/* ── Mobile: messages + bell + hamburger ── */}
         <div className="flex items-center gap-2 sm:hidden">
           {isAuthenticated && (
-            <button
-              type="button"
-              onClick={() => { setBellOpen((v) => !v); setMenuOpen(false); }}
-              className="relative inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/5 text-white/70"
-            >
-              <Bell className="h-4 w-4" />
-              {totalBellCount > 0 && (
-                <span className="absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
-                  {totalBellCount > 9 ? "9+" : totalBellCount}
-                </span>
-              )}
-            </button>
+            <>
+              <Link
+                href="/messages"
+                onClick={() => { setUnreadMsgCount(0); closeAll(); }}
+                className="relative inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/5 text-white/70"
+                title="הודעות"
+              >
+                <MessageSquare className="h-4 w-4" />
+                {unreadMsgCount > 0 && (
+                  <span className="absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
+                    {unreadMsgCount > 9 ? "9+" : unreadMsgCount}
+                  </span>
+                )}
+              </Link>
+              <button
+                type="button"
+                onClick={() => { setBellOpen((v) => !v); setMenuOpen(false); }}
+                className="relative inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/5 text-white/70"
+              >
+                <Bell className="h-4 w-4" />
+                {totalBellCount > 0 && (
+                  <span className="absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
+                    {totalBellCount > 9 ? "9+" : totalBellCount}
+                  </span>
+                )}
+              </button>
+            </>
           )}
           <button
             type="button"
@@ -275,10 +320,10 @@ export function Navbar() {
                 <div key={`${req.gigId}:${req.applicantId}`} className="rounded-xl border border-white/10 bg-white/5 p-2.5">
                   <p className="text-xs font-medium text-white"><Link href={`/users/${req.applicantId}`} onClick={closeAll} className="text-blue-300 hover:underline">{req.applicantName}</Link> רוצה לבצע: {req.gigTitle}</p>
                   <div className="mt-2 flex gap-2">
-                    <button type="button" onClick={() => handleAcceptRequest(req)} disabled={busyRequestKey === aKey || busyRequestKey === dKey} className="rounded-lg bg-emerald-600 px-2.5 py-1 text-xs font-medium text-white disabled:opacity-50">
+                    <button type="button" onClick={() => handleAcceptRequest(req)} disabled={busyRequestKey === aKey || busyRequestKey === dKey} className="rounded-lg bg-emerald-600 px-2.5 py-2 text-xs font-medium text-white disabled:opacity-50">
                       {busyRequestKey === aKey ? "מאשר..." : "אישור"}
                     </button>
-                    <button type="button" onClick={() => handleDenyRequest(req)} disabled={busyRequestKey === aKey || busyRequestKey === dKey} className="rounded-lg border border-white/15 px-2.5 py-1 text-xs font-medium text-white/70 disabled:opacity-50">
+                    <button type="button" onClick={() => handleDenyRequest(req)} disabled={busyRequestKey === aKey || busyRequestKey === dKey} className="rounded-lg border border-white/15 px-2.5 py-2 text-xs font-medium text-white/70 disabled:opacity-50">
                       {busyRequestKey === dKey ? "דוחה..." : "דחייה"}
                     </button>
                   </div>

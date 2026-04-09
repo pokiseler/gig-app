@@ -101,8 +101,8 @@ export function ChatDrawer() {
 
       {/* Drawer */}
       <div
-        className="fixed bottom-4 left-4 z-[70] flex w-[calc(100vw-2rem)] flex-col overflow-hidden rounded-3xl border border-white/10 shadow-2xl sm:left-auto sm:right-4 sm:w-[380px]"
-        style={{ maxHeight: "calc(100vh - 96px)", height: "520px" }}
+        className="fixed bottom-4 left-4 z-[70] flex h-[420px] w-[calc(100vw-2rem)] flex-col overflow-hidden rounded-3xl border border-white/10 shadow-2xl sm:left-auto sm:right-4 sm:h-[520px] sm:w-[380px]"
+        style={{ maxHeight: "calc(100vh - 96px)" }}
         dir="rtl"
       >
         {/* Header */}
