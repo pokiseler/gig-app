@@ -89,6 +89,24 @@ export interface ReviewItem {
   createdAt: string;
 }
 
+export interface ChatMessage {
+  _id: string;
+  senderId: { _id: string; name: string; avatarUrl?: string } | string;
+  receiverId: { _id: string; name: string } | string;
+  content: string;
+  read: boolean;
+  createdAt: string;
+}
+
+export interface ChatThread {
+  partnerId: string;
+  partnerName: string;
+  partnerAvatar?: string;
+  lastMessage: string;
+  lastAt: string;
+  unread: number;
+}
+
 // NEXT_PUBLIC_API_URL must be set in production (Vercel env vars).
 // In local development it falls back to localhost so .env.local is optional.
 const API_BASE_URL: string =
@@ -341,5 +359,29 @@ export async function getMyTransactions(token: string) {
   return request<{ total: number; transactions: TransactionItem[] }>("/users/me/transactions", {
     method: "GET",
     headers: buildHeaders(token),
+  });
+}
+
+// ── Chat / Messages ────────────────────────────────────────────────
+
+export async function getChatThreads(token: string) {
+  return request<{ threads: ChatThread[] }>("/messages/threads", {
+    method: "GET",
+    headers: buildHeaders(token),
+  });
+}
+
+export async function getChatThread(token: string, partnerId: string) {
+  return request<{ messages: ChatMessage[]; partner: { _id: string; name: string; avatarUrl?: string } | null }>(
+    `/messages/${partnerId}`,
+    { method: "GET", headers: buildHeaders(token) },
+  );
+}
+
+export async function sendChatMessage(token: string, partnerId: string, content: string) {
+  return request<{ message: ChatMessage }>(`/messages/${partnerId}`, {
+    method: "POST",
+    headers: buildHeaders(token),
+    body: JSON.stringify({ content }),
   });
 }

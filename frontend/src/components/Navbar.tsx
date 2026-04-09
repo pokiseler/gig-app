@@ -5,10 +5,11 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   Menu, X, Bell, Home, Briefcase, PlusCircle,
-  ClipboardList, User, LogOut, LogIn, ShieldCheck, Coins,
+  ClipboardList, User, LogOut, LogIn, ShieldCheck, Coins, MessageSquare,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useSSE } from "@/hooks/useSSE";
+import { useChat } from "@/context/ChatContext";
 import {
   acceptGigRequest,
   denyGigRequest,
@@ -19,6 +20,7 @@ import {
 export function Navbar() {
   const { user, token, isAuthenticated, signOut, loading } = useAuth();
   const { notifications, dismiss, dismissAll } = useSSE(isAuthenticated ? token : null);
+  const { openChat } = useChat();
   const router = useRouter();
 
   const [pendingRequests, setPendingRequests] = useState<GigRequestItem[]>([]);
@@ -64,6 +66,9 @@ export function Navbar() {
       setPendingRequests((prev) =>
         prev.filter((r) => !(r.gigId === req.gigId && r.applicantId === req.applicantId)),
       );
+      // Auto-open chat with the accepted applicant
+      openChat(req.applicantId, req.applicantName);
+      setBellOpen(false);
     } finally { setBusyRequestKey(""); }
   };
 
@@ -109,13 +114,16 @@ export function Navbar() {
           <Link href="/" className={navLink}><Home className="h-4 w-4" />בית</Link>
           <Link href="/gigs" className={navLink}><Briefcase className="h-4 w-4" />חלתורות</Link>
           <Link
-            href={isAuthenticated ? "/post" : "/register"}
+            href={isAuthenticated ? "/post" : "/auth"}
             className="inline-flex h-9 items-center gap-1.5 rounded-full bg-gradient-to-l from-blue-600 to-blue-500 px-4 text-sm font-semibold text-white shadow-lg shadow-blue-900/40 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-blue-700/50"
           >
             <PlusCircle className="h-4 w-4" />פרסום
           </Link>
           {isAuthenticated && (
-            <Link href="/tasks" className={navLink}><ClipboardList className="h-4 w-4" />משימות</Link>
+            <>
+              <Link href="/tasks" className={navLink}><ClipboardList className="h-4 w-4" />משימות</Link>
+              <Link href="/messages" className={navLink}><MessageSquare className="h-4 w-4" />הודעות</Link>
+            </>
           )}
           {!loading && (
             <>
@@ -296,8 +304,11 @@ export function Navbar() {
             {[
               { href: "/", label: "בית", icon: <Home className="h-4 w-4" /> },
               { href: "/gigs", label: "חלתורות", icon: <Briefcase className="h-4 w-4" /> },
-              { href: isAuthenticated ? "/post" : "/register", label: "פרסום חלתורה", icon: <PlusCircle className="h-4 w-4" /> },
-              ...(isAuthenticated ? [{ href: "/tasks", label: "משימות שלי", icon: <ClipboardList className="h-4 w-4" /> }] : []),
+              { href: isAuthenticated ? "/post" : "/auth", label: "פרסום חלתורה", icon: <PlusCircle className="h-4 w-4" /> },
+              ...(isAuthenticated ? [
+                { href: "/tasks", label: "משימות שלי", icon: <ClipboardList className="h-4 w-4" /> },
+                { href: "/messages", label: "הודעות", icon: <MessageSquare className="h-4 w-4" /> },
+              ] : []),
               ...(isAuthenticated && user?._id ? [{ href: `/users/${user._id}`, label: "פרופיל שלי", icon: <User className="h-4 w-4" /> }] : []),
               ...(user?.role === "admin" ? [{ href: "/admin", label: "לוח ניהול", icon: <ShieldCheck className="h-4 w-4" /> }] : []),
             ].map(({ href, label, icon }) => (

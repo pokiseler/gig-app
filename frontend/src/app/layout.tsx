@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Heebo, Geist_Mono } from "next/font/google";
 import { AuthProvider } from "@/context/AuthContext";
+import { ChatProvider } from "@/context/ChatContext";
+import { ChatDrawer } from "@/components/ChatDrawer";
 import "./globals.css";
 
 const heebo = Heebo({
@@ -31,7 +33,12 @@ export default function RootLayout({
       className={`${heebo.variable} ${geistMono.variable} h-full antialiased dark`}
     >
       <body suppressHydrationWarning className="app-gradient min-h-full flex flex-col text-white">
-        <AuthProvider>{children}</AuthProvider>
+        <AuthProvider>
+          <ChatProvider>
+            {children}
+            <ChatDrawer />
+          </ChatProvider>
+        </AuthProvider>
       </body>
     </html>
   );
