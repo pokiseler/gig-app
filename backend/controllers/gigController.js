@@ -376,14 +376,6 @@ const requestGigAssignment = async (req, res) => {
       return res.status(400).json({ message: 'Gig id is invalid.' });
     }
 
-    // Quota check before touching the gig
-    const applicantUser = await User.findById(actorUser._id).select('usageQuota').lean();
-    if (getEffectiveMonthlyCount(applicantUser?.usageQuota) >= MONTHLY_LIMIT) {
-      const err = new Error('הגעת למגבלה החודשית של 4 חלתורות.');
-      err.code = 'MONTHLY_LIMIT_REACHED';
-      throw err;
-    }
-
     const responsePayload = await runAtomicOperation(async (session) => {
       const gig = await (session ? Gig.findById(id).session(session) : Gig.findById(id));
       if (!gig) {
@@ -460,8 +452,12 @@ const requestGigAssignment = async (req, res) => {
       return res.status(404).json({ message: error.message });
     }
 
-    if (error.code === 'MONTHLY_LIMIT_REACHED') {
-      return res.status(403).json({ message: error.message, code: 'MONTHLY_LIMIT_REACHED' });
+    if (error.code === 'TRANSACTIONS_UNAVAILABLE') {
+      return res.status(503).json({ message: error.message });
+    }
+
+    if (error.message === 'Gig not found.') {
+      return res.status(404).json({ message: error.message });
     }
 
     if (

@@ -90,7 +90,7 @@ const getUserProfile = async (req, res) => {
       return res.status(400).json({ message: 'User id is invalid.' });
     }
 
-    const user = await User.findById(id).select('_id name email role phone verified balance escrowBalance avatarUrl bio skills location averageRating totalReviews createdAt updatedAt');
+    const user = await User.findById(id).select('_id name email role phone verified usageQuota avatarUrl bio skills location averageRating totalReviews createdAt updatedAt');
 
     if (!user) {
       return res.status(404).json({ message: 'User not found.' });

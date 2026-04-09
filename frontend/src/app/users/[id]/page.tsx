@@ -135,6 +135,15 @@ export default function UserProfilePage() {
                   <Badge className="inline-flex items-center gap-1 bg-amber-400/15 text-amber-300 border border-amber-400/30">
                     ⭐ {(user.averageRating || 0).toFixed(1)} ({user.totalReviews || 0})
                   </Badge>
+                  {isOwner && (
+                    <Badge className={`inline-flex items-center gap-1 border ${
+                      (user.usageQuota?.performedThisMonth ?? 0) >= 4
+                        ? "border-red-400/30 bg-red-400/10 text-red-300"
+                        : "border-blue-400/30 bg-blue-400/10 text-blue-300"
+                    }`}>
+                      {(user.usageQuota?.performedThisMonth ?? 0)} / 4 חלתורות החודש
+                    </Badge>
+                  )}
                   {isOwner ? (
                     <Link
                       href="/profile/edit"
