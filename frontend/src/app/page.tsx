@@ -19,7 +19,7 @@ export default function Home() {
       .finally(() => setLoading(false));
   }, []);
 
-const helpHref = isAuthenticated ? "/gigs/create" : "/auth";
+const helpHref = isAuthenticated ? "/post" : "/auth";
 const browseHref = isAuthenticated ? "/gigs" : "/auth";
 
   return (
