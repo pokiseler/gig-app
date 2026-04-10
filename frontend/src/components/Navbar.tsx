@@ -210,7 +210,7 @@ export function Navbar() {
                           <p className="text-sm font-semibold text-white">התראות</p>
                           <button
                             type="button"
-                            onClick={() => { dismissAll(); setBellOpen(false); }}
+                            onClick={() => { dismissAll(); setPendingRequests([]); setBellOpen(false); }}
                             className="text-xs text-white/50 hover:text-white"
                           >
                             ניקוי
@@ -322,7 +322,7 @@ export function Navbar() {
         <div className="glass-heavy mx-4 mb-3 rounded-2xl p-3 sm:hidden">
           <div className="mb-2 flex items-center justify-between">
             <p className="text-sm font-semibold text-white">התראות</p>
-            <button type="button" onClick={() => { dismissAll(); setBellOpen(false); }} className="text-xs text-white/50 hover:text-white">ניקוי</button>
+            <button type="button" onClick={() => { dismissAll(); setPendingRequests([]); setBellOpen(false); }} className="text-xs text-white/50 hover:text-white">ניקוי</button>
           </div>
           {requestError && (
             <p className="mb-2 rounded-lg bg-red-500/15 border border-red-400/20 px-2.5 py-1.5 text-xs text-red-300">{requestError}</p>

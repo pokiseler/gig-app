@@ -601,7 +601,7 @@ const denyGigApplicant = async (req, res) => {
     }
 
     const result = await runAtomicOperation(async (session) => {
-      const gig = await withMaybeSession(Gig.findById(id), session);
+      const gig = await (session ? Gig.findById(id).session(session) : Gig.findById(id));
       if (!gig) {
         throw new Error('Gig not found.');
       }
@@ -622,7 +622,7 @@ const denyGigApplicant = async (req, res) => {
 
       targetApplication.status = 'DENIED';
       targetApplication.actedAt = new Date();
-      await saveWithMaybeSession(gig, session);
+      await (session ? gig.save({ session }) : gig.save());
 
       return {
         gig,
