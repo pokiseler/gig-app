@@ -392,7 +392,7 @@ const requestGigAssignment = async (req, res) => {
 
     if (activeGigsCount >= MONTHLY_LIMIT) {
       return res.status(403).json({
-        message: 'הגעת למגבלת המקסימום. ניתן להחזיק עד 4 בקשות ממתינות או חלתורות פעילות במקביל. המתן לתשובה, סיום חלתורה קיימת, או בטל בקשה קיימת.',
+        message: 'הגעת למגבלה של 4 חלתורות פעילות. חלתורה שהתקבלה נספרת במגבלה — רק אם לקוח ידחה אחת מבקשותיך תוכל לשלוח בקשה חדשה.',
         code: 'CONCURRENT_LIMIT_REACHED',
       });
     }
