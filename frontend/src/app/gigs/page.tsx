@@ -113,12 +113,6 @@ export default function GigsPage() {
       return;
     }
 
-    // Block if user has reached the monthly completion limit
-    if (user?.usageQuota && user.usageQuota.performedThisMonth >= 4) {
-      setModalError("הגעת למגבלה החודשית של 4 חלתורות. תוכל לשלוח בקשות חדשות בחודש הבא.");
-      return;
-    }
-
     setModalBusy(true);
     setModalError("");
 
