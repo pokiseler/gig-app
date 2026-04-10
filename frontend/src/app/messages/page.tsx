@@ -5,7 +5,7 @@ import dynamic from "next/dynamic";
 import { MessageSquare, ChevronLeft } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useChat } from "@/context/ChatContext";
-import { useSSE } from "@/hooks/useSSE";
+import { useSSEContext } from "@/context/SSEContext";
 import { getChatThreads, type ChatThread } from "@/services/api";
 
 const Navbar = dynamic(() => import("@/components/Navbar").then((m) => m.Navbar), { ssr: false });
@@ -13,7 +13,7 @@ const Navbar = dynamic(() => import("@/components/Navbar").then((m) => m.Navbar)
 export default function MessagesPage() {
   const { token, isAuthenticated } = useAuth();
   const { openChat } = useChat();
-  const { notifications } = useSSE(isAuthenticated ? token : null);
+  const { notifications } = useSSEContext();
 
   const [threads, setThreads] = useState<ChatThread[]>([]);
   const [loading, setLoading] = useState(true);

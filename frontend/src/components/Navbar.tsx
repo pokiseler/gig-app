@@ -8,7 +8,7 @@ import {
   ClipboardList, User, LogOut, LogIn, ShieldCheck, MessageSquare,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
-import { useSSE } from "@/hooks/useSSE";
+import { useSSEContext } from "@/context/SSEContext";
 import { useChat } from "@/context/ChatContext";
 import {
   acceptGigRequest,
@@ -20,7 +20,7 @@ import {
 
 export function Navbar() {
   const { user, token, isAuthenticated, signOut, loading } = useAuth();
-  const { notifications, dismiss, dismissAll } = useSSE(isAuthenticated ? token : null);
+  const { notifications, dismiss, dismissAll } = useSSEContext();
   const { openChat } = useChat();
   const router = useRouter();
 

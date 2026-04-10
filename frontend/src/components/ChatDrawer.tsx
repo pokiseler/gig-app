@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Send, X, MessageSquare } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useChat } from "@/context/ChatContext";
-import { useSSE } from "@/hooks/useSSE";
+import { useSSEContext } from "@/context/SSEContext";
 import {
   getChatThread,
   sendChatMessage,
@@ -14,7 +14,7 @@ import {
 export function ChatDrawer() {
   const { chatTarget, closeChat } = useChat();
   const { user, token, isAuthenticated } = useAuth();
-  const { notifications } = useSSE(isAuthenticated ? token : null);
+  const { notifications } = useSSEContext();
 
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
