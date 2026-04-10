@@ -11,7 +11,6 @@ import {
   markGigAsFinished,
   type GigItem,
 } from "@/services/api";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
 const Navbar = dynamic(() => import("@/components/Navbar").then((m) => m.Navbar), {
@@ -113,7 +112,7 @@ export default function TasksPage() {
       <div className="min-h-screen text-white">
         <Navbar />
         <main className="mx-auto w-full max-w-5xl px-4 py-8 sm:px-6 sm:py-14">
-          <p className="text-sm text-neutral-600">יש להתחבר כדי לצפות במשימות.</p>
+          <p className="text-sm text-white/50">יש להתחבר כדי לצפות במשימות.</p>
         </main>
       </div>
     );
@@ -125,11 +124,11 @@ export default function TasksPage() {
       <main className="mx-auto w-full max-w-5xl px-4 py-8 sm:px-6 sm:py-14">
         <h1 className="mb-6 text-3xl font-semibold">ניהול משימות</h1>
 
-        {loading ? <p>טוען משימות...</p> : null}
-        {error ? <p className="mb-4 text-sm text-red-700">{error}</p> : null}
+        {loading ? <p className="text-sm text-white/50">טוען משימות...</p> : null}
+        {error ? <p className="mb-4 text-sm text-red-400">{error}</p> : null}
 
         {!loading && tasks.length === 0 ? (
-          <p className="text-sm text-neutral-600">אין כרגע משימות פעילות.</p>
+          <p className="text-sm text-white/50">אין כרגע משימות פעילות.</p>
         ) : null}
 
         <div className="space-y-4">
@@ -140,52 +139,52 @@ export default function TasksPage() {
             const isBusy = busyTaskId === gig._id;
 
             return (
-              <Card key={gig._id}>
-                <CardHeader>
-                  <CardTitle className="flex items-center justify-between gap-2 text-base">
-                    <span>{gig.title}</span>
-                    {isPending && (
-                      <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700">
-                        ממתין לאישור
-                      </span>
-                    )}
-                  </CardTitle>
-                </CardHeader>
+              <div key={gig._id} className="overflow-hidden rounded-2xl border border-white/10 bg-white/5 backdrop-blur-sm">
+                {/* Card header */}
+                <div className="flex items-center justify-between gap-2 border-b border-white/8 px-5 py-4">
+                  <h3 className="text-base font-semibold text-white">{gig.title}</h3>
+                  {isPending && (
+                    <span className="shrink-0 rounded-full border border-amber-400/20 bg-amber-500/20 px-2.5 py-0.5 text-xs font-medium text-amber-300">
+                      ממתין לאישור
+                    </span>
+                  )}
+                </div>
 
-                <CardContent className="space-y-3">
+                {/* Card body */}
+                <div className="space-y-3 px-5 py-4">
                   {isPending ? (
-                    <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm">
-                      <p className="font-medium text-amber-800">ממתין לאישור הלקוח</p>
-                      <p className="mt-1 text-xs text-amber-600">
+                    <div className="rounded-xl border border-amber-400/20 bg-amber-500/10 p-3 text-sm">
+                      <p className="font-medium text-amber-300">ממתין לאישור הלקוח</p>
+                      <p className="mt-1 text-xs text-amber-400/80">
                         שלחת בקשה לחלתורה זו. תקבל התראה כשהלקוח יאשר או ידחה.
                       </p>
                     </div>
                   ) : (
-                    <div className="rounded-lg border border-black/10 bg-neutral-50 p-3 text-sm">
-                      <p className="font-medium text-neutral-900">{progressLabel(gig)}</p>
-                      <p className="mt-1 text-xs text-neutral-600">
+                    <div className="rounded-xl border border-white/10 bg-white/5 p-3 text-sm">
+                      <p className="font-medium text-white">{progressLabel(gig)}</p>
+                      <p className="mt-1 text-xs text-white/50">
                         ממתין לפרילנסר {"->"} ממתין ללקוח {"->"} הושלם
                       </p>
                     </div>
                   )}
 
-                  <div className="text-xs text-neutral-600">
+                  <div className="text-xs text-white/50">
                     {isPending ? (
                       <>
                         בעל החלתורה:{" "}
                         {gig.author?._id ? (
-                          <Link href={`/users/${gig.author._id}`} className="hover:underline">{gig.author.name || "-"}</Link>
+                          <Link href={`/users/${gig.author._id}`} className="text-blue-400/80 hover:underline hover:text-blue-300">{gig.author.name || "-"}</Link>
                         ) : "-"}
                       </>
                     ) : (
                       <>
                         לקוח:{" "}
                         {gig.client?._id ? (
-                          <Link href={`/users/${gig.client._id}`} className="hover:underline">{gig.client.name || "-"}</Link>
+                          <Link href={`/users/${gig.client._id}`} className="text-blue-400/80 hover:underline hover:text-blue-300">{gig.client.name || "-"}</Link>
                         ) : "-"}
                         {" | "}פרילנסר:{" "}
                         {gig.freelancer?._id ? (
-                          <Link href={`/users/${gig.freelancer._id}`} className="hover:underline">{gig.freelancer.name || "-"}</Link>
+                          <Link href={`/users/${gig.freelancer._id}`} className="text-blue-400/80 hover:underline hover:text-blue-300">{gig.freelancer.name || "-"}</Link>
                         ) : "-"}
                       </>
                     )}
@@ -204,8 +203,8 @@ export default function TasksPage() {
                       </Button>
                     ) : null}
                   </div>
-                </CardContent>
-              </Card>
+                </div>
+              </div>
             );
           })}
         </div>

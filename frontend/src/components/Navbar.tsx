@@ -238,7 +238,7 @@ export function Navbar() {
                             );
                           })}
                           {notifications.map((n) => (
-                            <button key={n.id} type="button" onClick={() => dismiss(n.id)} className="w-full rounded-xl border border-white/10 bg-white/5 p-2 text-right text-xs text-white/70 hover:bg-white/10">
+                            <button key={n.id} type="button" onClick={() => dismiss(n.id)} className="w-full rounded-xl border border-white/15 bg-white/10 p-2.5 text-right text-xs text-white hover:bg-white/15">
                               {n.message}
                             </button>
                           ))}
@@ -346,7 +346,7 @@ export function Navbar() {
               );
             })}
             {notifications.map((n) => (
-              <button key={n.id} type="button" onClick={() => dismiss(n.id)} className="w-full rounded-xl border border-white/10 bg-white/5 p-2 text-right text-xs text-white/70">
+              <button key={n.id} type="button" onClick={() => dismiss(n.id)} className="w-full rounded-xl border border-white/15 bg-white/10 p-2.5 text-right text-xs text-white hover:bg-white/15">
                 {n.message}
               </button>
             ))}

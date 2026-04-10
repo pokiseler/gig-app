@@ -387,15 +387,16 @@ const requestGigAssignment = async (req, res) => {
       if (app?.requestedAt) activeSlots.push(new Date(app.requestedAt));
     }
 
-    const inProgressGigs = await Gig.find(
-      { status: 'in_progress', freelancer: actorUser._id },
+    const acceptedGigs = await Gig.find(
+      { status: { $in: ['in_progress', 'completed'] }, freelancer: actorUser._id },
       { applications: 1 },
     );
-    for (const gig of inProgressGigs) {
+    for (const gig of acceptedGigs) {
       const acceptedApp = gig.applications?.find(
         (a) => a.user.toString() === actorUser._id.toString() && a.status === 'ACCEPTED',
       );
-      // Use requestedAt (when the slot was taken), not actedAt (when it was accepted)
+      // Use requestedAt (when the slot was taken), not actedAt (when it was accepted).
+      // Completed gigs still hold their slot until the 30-day window expires.
       if (acceptedApp?.requestedAt) activeSlots.push(new Date(acceptedApp.requestedAt));
     }
 
