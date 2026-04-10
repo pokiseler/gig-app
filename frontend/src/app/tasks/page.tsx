@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { useAuth } from "@/hooks/useAuth";
+import { useSSE } from "@/hooks/useSSE";
 import {
   confirmGigReceipt,
   getMyTasks,
@@ -19,7 +20,7 @@ const Navbar = dynamic(() => import("@/components/Navbar").then((m) => m.Navbar)
 
 const progressLabel = (gig: GigItem) => {
   if (gig.status === "completed") {
-    return "התשלום שוחרר";
+    return "החלתורה הושלמה";
   }
 
   if (gig.freelancerConfirmed && !gig.clientConfirmed) {
@@ -35,6 +36,7 @@ const progressLabel = (gig: GigItem) => {
 
 export default function TasksPage() {
   const { token, user, isAuthenticated } = useAuth();
+  const { notifications } = useSSE(isAuthenticated ? token : null);
   const [tasks, setTasks] = useState<GigItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -62,6 +64,13 @@ export default function TasksPage() {
   useEffect(() => {
     void loadTasks();
   }, [loadTasks]);
+
+  // Reload tasks when a request is accepted or denied via SSE
+  useEffect(() => {
+    if (notifications.some((n) => n.event === "gig_request_accepted" || n.event === "gig_request_denied")) {
+      void loadTasks();
+    }
+  }, [notifications, loadTasks]);
 
   const onMarkDone = async (gigId: string) => {
     if (!token) {
@@ -125,6 +134,7 @@ export default function TasksPage() {
 
         <div className="space-y-4">
           {tasks.map((gig) => {
+            const isPending = gig.status === "open";
             const isFreelancer = Boolean(user?._id && gig.freelancer?._id === user._id);
             const isClient = Boolean(user?._id && gig.client?._id === user._id);
             const isBusy = busyTaskId === gig._id;
@@ -134,27 +144,51 @@ export default function TasksPage() {
                 <CardHeader>
                   <CardTitle className="flex items-center justify-between gap-2 text-base">
                     <span>{gig.title}</span>
-                    <span className="text-sm font-normal text-neutral-600">30 נקודות</span>
+                    {isPending && (
+                      <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700">
+                        ממתין לאישור
+                      </span>
+                    )}
                   </CardTitle>
                 </CardHeader>
 
                 <CardContent className="space-y-3">
-                  <div className="rounded-lg border border-black/10 bg-neutral-50 p-3 text-sm">
-                    <p className="font-medium text-neutral-900">{progressLabel(gig)}</p>
-                    <p className="mt-1 text-xs text-neutral-600">
-                      ממתין לפרילנסר {"->"} ממתין ללקוח {"->"} התשלום שוחרר
-                    </p>
-                  </div>
+                  {isPending ? (
+                    <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm">
+                      <p className="font-medium text-amber-800">ממתין לאישור הלקוח</p>
+                      <p className="mt-1 text-xs text-amber-600">
+                        שלחת בקשה לחלתורה זו. תקבל התראה כשהלקוח יאשר או ידחה.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="rounded-lg border border-black/10 bg-neutral-50 p-3 text-sm">
+                      <p className="font-medium text-neutral-900">{progressLabel(gig)}</p>
+                      <p className="mt-1 text-xs text-neutral-600">
+                        ממתין לפרילנסר {"->"} ממתין ללקוח {"->"} הושלם
+                      </p>
+                    </div>
+                  )}
 
                   <div className="text-xs text-neutral-600">
-                    לקוח:{" "}
-                    {gig.client?._id ? (
-                      <Link href={`/users/${gig.client._id}`} className="hover:underline">{gig.client.name || "-"}</Link>
-                    ) : "-"}
-                    {" | "}פרילנסר:{" "}
-                    {gig.freelancer?._id ? (
-                      <Link href={`/users/${gig.freelancer._id}`} className="hover:underline">{gig.freelancer.name || "-"}</Link>
-                    ) : "-"}
+                    {isPending ? (
+                      <>
+                        בעל החלתורה:{" "}
+                        {gig.author?._id ? (
+                          <Link href={`/users/${gig.author._id}`} className="hover:underline">{gig.author.name || "-"}</Link>
+                        ) : "-"}
+                      </>
+                    ) : (
+                      <>
+                        לקוח:{" "}
+                        {gig.client?._id ? (
+                          <Link href={`/users/${gig.client._id}`} className="hover:underline">{gig.client.name || "-"}</Link>
+                        ) : "-"}
+                        {" | "}פרילנסר:{" "}
+                        {gig.freelancer?._id ? (
+                          <Link href={`/users/${gig.freelancer._id}`} className="hover:underline">{gig.freelancer.name || "-"}</Link>
+                        ) : "-"}
+                      </>
+                    )}
                   </div>
 
                   <div className="flex flex-wrap gap-2">

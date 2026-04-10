@@ -75,20 +75,6 @@ const { runAtomicOperation } = pointsService;
 
 const MONTHLY_LIMIT = 4;
 
-/**
- * Returns the effective performedThisMonth count, resetting lazily if the
- * calendar month has rolled over since lastReset.
- */
-const getEffectiveMonthlyCount = (usageQuota) => {
-  if (!usageQuota) return 0;
-  const now = new Date();
-  const last = new Date(usageQuota.lastReset);
-  if (last.getFullYear() !== now.getFullYear() || last.getMonth() !== now.getMonth()) {
-    return 0; // month rolled over — treat as reset
-  }
-  return usageQuota.performedThisMonth || 0;
-};
-
 const createGig = async (req, res) => {
   try {
     const parsed = parseOrFail(createGigSchema, req.body, res);
@@ -376,23 +362,67 @@ const requestGigAssignment = async (req, res) => {
       return res.status(400).json({ message: 'Gig id is invalid.' });
     }
 
-    // Block users who already hold 4 concurrent active slots
-    const activeGigsCount = await Gig.countDocuments({
-      $or: [
-        {
-          status: 'open',
-          applications: { $elemMatch: { user: actorUser._id, status: 'REQUESTED' } },
-        },
-        {
-          status: 'in_progress',
-          freelancer: actorUser._id,
-        },
-      ],
-    });
+    // Slot model: 4 slots per 30-day window that starts from the freelancer's FIRST
+    // slot taken in the current cycle. All 4 slots expire together exactly 30 days
+    // after the first one was taken — even if the 4th was taken on day 29.
+    // A denial frees a slot immediately within the window.
+    // After the window expires the freelancer gets a fresh 4 slots.
+    const WINDOW_MS = 30 * 24 * 60 * 60 * 1000;
+
+    // Collect stable timestamps for each active slot.
+    // Always use requestedAt — the moment the freelancer sent the request — as the slot timestamp.
+    // This correctly anchors the slot to when it was "taken", regardless of when the owner
+    // later accepted it. Using actedAt (acceptance time) would mis-classify a request sent in
+    // window 1 but accepted in window 2 as a window-2 slot, corrupting the window logic.
+    const activeSlots = [];
+
+    const pendingGigs = await Gig.find(
+      { status: 'open', applications: { $elemMatch: { user: actorUser._id, status: 'REQUESTED' } } },
+      { applications: 1 },
+    );
+    for (const gig of pendingGigs) {
+      const app = gig.applications.find(
+        (a) => a.user.toString() === actorUser._id.toString() && a.status === 'REQUESTED',
+      );
+      if (app?.requestedAt) activeSlots.push(new Date(app.requestedAt));
+    }
+
+    const inProgressGigs = await Gig.find(
+      { status: 'in_progress', freelancer: actorUser._id },
+      { applications: 1 },
+    );
+    for (const gig of inProgressGigs) {
+      const acceptedApp = gig.applications?.find(
+        (a) => a.user.toString() === actorUser._id.toString() && a.status === 'ACCEPTED',
+      );
+      // Use requestedAt (when the slot was taken), not actedAt (when it was accepted)
+      if (acceptedApp?.requestedAt) activeSlots.push(new Date(acceptedApp.requestedAt));
+    }
+
+    // Sort ASC and walk to find the current window start.
+    // A new window begins when a slot falls outside the previous window's 30-day range —
+    // meaning the freelancer already started a fresh cycle.
+    activeSlots.sort((a, b) => a - b);
+    let windowStart = null;
+    for (const ts of activeSlots) {
+      if (windowStart === null || ts.getTime() >= windowStart.getTime() + WINDOW_MS) {
+        windowStart = ts;
+      }
+    }
+
+    // Count active slots in the current window (0 if no slots or window has expired).
+    let activeGigsCount = 0;
+    if (windowStart !== null) {
+      const windowExpiry = new Date(windowStart.getTime() + WINDOW_MS);
+      if (Date.now() < windowExpiry.getTime()) {
+        activeGigsCount = activeSlots.filter((ts) => ts.getTime() >= windowStart.getTime()).length;
+      }
+      // else: window already expired → all 4 slots are free
+    }
 
     if (activeGigsCount >= MONTHLY_LIMIT) {
       return res.status(403).json({
-        message: 'הגעת למגבלה של 4 חלתורות פעילות. חלתורה שהתקבלה נספרת במגבלה — רק אם לקוח ידחה אחת מבקשותיך תוכל לשלוח בקשה חדשה.',
+        message: 'הגעת למגבלה של 4 חלתורות בחלון 30 הימים הנוכחי. כל 4 המשבצות מתפנות יחד 30 יום מהרגע שנלקחה המשבצת הראשונה. דחייה מפנה משבצת מיידית.',
         code: 'CONCURRENT_LIMIT_REACHED',
       });
     }
@@ -473,14 +503,6 @@ const requestGigAssignment = async (req, res) => {
       return res.status(404).json({ message: error.message });
     }
 
-    if (error.code === 'TRANSACTIONS_UNAVAILABLE') {
-      return res.status(503).json({ message: error.message });
-    }
-
-    if (error.message === 'Gig not found.') {
-      return res.status(404).json({ message: error.message });
-    }
-
     if (
       error.message === 'Gig id is invalid.'
       || error.message === 'Gig is not open for applications.'
@@ -527,14 +549,6 @@ const acceptGigApplicant = async (req, res) => {
     const freelancerUser = await User.findById(applicantId).select('name usageQuota');
     if (!freelancerUser) return res.status(400).json({ message: 'Applicant user was not found.' });
 
-    // Quota check for the freelancer being accepted
-    if (getEffectiveMonthlyCount(freelancerUser.usageQuota) >= MONTHLY_LIMIT) {
-      return res.status(403).json({
-        message: 'המבצע הגיע למגבלה החודשית של 4 חלתורות.',
-        code: 'MONTHLY_LIMIT_REACHED',
-      });
-    }
-
     gig.applications.forEach((entry) => {
       if (entry.user.toString() === String(applicantId)) {
         entry.status = 'ACCEPTED';
@@ -551,14 +565,19 @@ const acceptGigApplicant = async (req, res) => {
     gig.clientConfirmed = false;
     await gig.save();
 
-    // Increment monthly usage counter (lazy-reset if month rolled over)
+    // Increment monthly usage counter for admin tracking (lazy-reset if month rolled over)
     const now = new Date();
     const last = freelancerUser.usageQuota?.lastReset ? new Date(freelancerUser.usageQuota.lastReset) : new Date(0);
     const monthRolled = last.getFullYear() !== now.getFullYear() || last.getMonth() !== now.getMonth();
-    await User.findByIdAndUpdate(freelancerUser._id, {
-      $set: { 'usageQuota.lastReset': monthRolled ? now : undefined },
-      $inc: { 'usageQuota.performedThisMonth': monthRolled ? -(freelancerUser.usageQuota?.performedThisMonth || 0) + 1 : 1 },
-    });
+    if (monthRolled) {
+      await User.findByIdAndUpdate(freelancerUser._id, {
+        $set: { 'usageQuota.lastReset': now, 'usageQuota.performedThisMonth': 1 },
+      });
+    } else {
+      await User.findByIdAndUpdate(freelancerUser._id, {
+        $inc: { 'usageQuota.performedThisMonth': 1 },
+      });
+    }
 
     // Log USAGE transaction for admin tracking
     await Transaction.create({
@@ -585,7 +604,7 @@ const acceptGigApplicant = async (req, res) => {
       .populate('freelancer', 'name email');
 
     sseManager.send(result.applicantId, 'gig_request_accepted', {
-      message: `Your request was accepted: ${result.gigTitle}`,
+      message: `התקבלת לחלתורה: ${result.gigTitle}`,
       gigId: result.gig._id,
       gigTitle: result.gigTitle,
     });
@@ -644,7 +663,7 @@ const denyGigApplicant = async (req, res) => {
     });
 
     sseManager.send(result.applicantId, 'gig_request_denied', {
-      message: `Your request was denied: ${result.gigTitle}`,
+      message: `בקשתך לחלתורה "${result.gigTitle}" נדחתה`,
       gigId: result.gig._id,
       gigTitle: result.gigTitle,
     });
@@ -864,10 +883,10 @@ const getMyTasks = async (req, res) => {
 
     const gigs = await Gig.find({
       $or: [
-        { client: actorUser._id },
-        { freelancer: actorUser._id },
+        { client: actorUser._id, status: { $in: ['in_progress', 'completed'] } },
+        { freelancer: actorUser._id, status: { $in: ['in_progress', 'completed'] } },
+        { status: 'open', applications: { $elemMatch: { user: actorUser._id, status: 'REQUESTED' } } },
       ],
-      status: { $in: ['in_progress', 'completed'] },
     })
       .populate('author', 'name role averageRating totalReviews')
       .populate('client', 'name email')
