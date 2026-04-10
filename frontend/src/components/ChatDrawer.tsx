@@ -12,7 +12,7 @@ import {
 } from "@/services/api";
 
 export function ChatDrawer() {
-  const { chatTarget, closeChat } = useChat();
+  const { chatTarget, openChat, closeChat } = useChat();
   const { user, token, isAuthenticated } = useAuth();
   const { notifications } = useSSEContext();
 
@@ -22,6 +22,7 @@ export function ChatDrawer() {
   const [loadError, setLoadError] = useState("");
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const seenNotifIds = useRef<Set<string>>(new Set());
 
   // Load thread when chatTarget changes
   const loadThread = useCallback(async () => {
@@ -49,15 +50,28 @@ export function ChatDrawer() {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // Live: reload when a new_message SSE arrives from our chat partner
+  // Live: reload when a new_message SSE arrives from our chat partner.
+  // Auto-open the drawer if it is closed or open with a different person.
   useEffect(() => {
-    const hasNew = notifications.some(
-      (n) => n.event === "new_message",
-    );
-    if (hasNew && chatTarget) {
-      void loadThread();
+    for (const n of notifications) {
+      if (n.event !== "new_message") continue;
+      if (seenNotifIds.current.has(n.id)) continue;
+      seenNotifIds.current.add(n.id);
+
+      const senderId = typeof n.data.senderId === "string" ? n.data.senderId : null;
+      const senderName = typeof n.data.senderName === "string" ? n.data.senderName : "משתמש";
+
+      if (!senderId) continue;
+
+      // Auto-open (or switch to) the sender's chat
+      if (!chatTarget || chatTarget.partnerId !== senderId) {
+        openChat(senderId, senderName);
+      } else {
+        // Already open with this person — just reload the thread
+        void loadThread();
+      }
     }
-  }, [notifications, chatTarget, loadThread]);
+  }, [notifications, chatTarget, openChat, loadThread]);
 
   // Focus input when drawer opens
   useEffect(() => {

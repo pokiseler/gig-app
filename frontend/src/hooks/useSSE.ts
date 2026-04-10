@@ -7,6 +7,7 @@ export interface SSENotification {
   event: string;
   message: string;
   timestamp: number;
+  data: Record<string, unknown>;
 }
 
 // Derive the SSE base from the same env variable used by the rest of the app.
@@ -39,6 +40,7 @@ export function useSSE(token: string | null) {
               event: name,
               message: typeof data.message === "string" ? data.message : name,
               timestamp: Date.now(),
+              data,
             },
             ...prev.slice(0, 19), // keep at most 20
           ])
