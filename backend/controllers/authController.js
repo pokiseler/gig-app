@@ -23,6 +23,7 @@ const sanitizeUser = (user) => ({
   avatarUrl: user.avatarUrl,
   bio: user.bio,
   skills: user.skills,
+  categories: user.categories,
   location: user.location,
   averageRating: user.averageRating,
   totalReviews: user.totalReviews,

@@ -62,6 +62,10 @@ const UserSchema = new mongoose.Schema({
     type: [String],
     default: [],
   },
+  categories: {
+    type: [String],
+    default: [],
+  },
   location: {
     city: {
       type: String, // e.g. "Tel Aviv", "Bat Yam"

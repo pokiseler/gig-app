@@ -8,6 +8,7 @@ import dynamic from "next/dynamic";
 import { useAuth } from "@/hooks/useAuth";
 import { createGig } from "@/services/api";
 import { MARKET_CATEGORIES, ISRAEL_CITIES } from "@/lib/marketOptions";
+import { CityAutocomplete } from "@/components/CityAutocomplete";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -176,21 +177,13 @@ export default function PostPage() {
                     control={control}
                     name="city"
                     render={({ field }) => (
-                      <Select
+                      <CityAutocomplete
                         value={field.value ?? ""}
-                        onValueChange={(value) => {
-                          field.onChange(value || "");
-                        }}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="בחר עיר" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {ISRAEL_CITIES.map((item) => (
-                            <SelectItem key={item} value={item}>{item}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                        onChange={(value) => field.onChange(value)}
+                        options={ISRAEL_CITIES}
+                        placeholder="הקלד או בחר עיר"
+                        clearAriaLabel="נקה עיר"
+                      />
                     )}
                   />
                   {errors.city && <p className="mt-1 text-xs text-red-600">{errors.city.message}</p>}

@@ -27,7 +27,7 @@ const protect = async (req, res, next) => {
       return res.status(401).json({ message: 'Not authorized, token payload is invalid.' });
     }
 
-    const user = await User.findById(userId).select('_id name email role phone verified balance escrowBalance avatarUrl bio skills location averageRating totalReviews createdAt updatedAt');
+    const user = await User.findById(userId).select('_id name email role phone verified balance escrowBalance avatarUrl bio skills categories location averageRating totalReviews createdAt updatedAt');
 
     if (!user) {
       return res.status(401).json({ message: 'Not authorized, user no longer exists.' });
@@ -71,7 +71,7 @@ const optionalProtect = async (req, _res, next) => {
       return next();
     }
 
-    const user = await User.findById(userId).select('_id name email role phone verified balance escrowBalance avatarUrl bio skills location averageRating totalReviews createdAt updatedAt');
+    const user = await User.findById(userId).select('_id name email role phone verified balance escrowBalance avatarUrl bio skills categories location averageRating totalReviews createdAt updatedAt');
     if (user) {
       req.user = user;
     }

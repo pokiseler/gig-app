@@ -14,6 +14,9 @@ const buildProfilePayload = (body) => {
     : Array.isArray(body.skills)
       ? body.skills.map((item) => String(item).trim()).filter(Boolean)
       : undefined;
+  const categories = Array.isArray(body.categories)
+    ? body.categories.map((item) => String(item).trim()).filter(Boolean)
+    : undefined;
 
   return {
     name: body.name,
@@ -21,6 +24,7 @@ const buildProfilePayload = (body) => {
     avatarUrl: body.avatarUrl,
     bio: body.bio,
     skills,
+    categories,
     location: {
       city: body.city,
       address: body.address,
@@ -57,6 +61,16 @@ const updateMyProfile = async (req, res) => {
 
     if (nextProfile.skills) {
       nextProfile.skills = nextProfile.skills.map((s) => s.trim()).filter(Boolean);
+      if (!nextProfile.categories || nextProfile.categories.length === 0) {
+        nextProfile.categories = nextProfile.skills;
+      }
+    }
+
+    if (nextProfile.categories) {
+      nextProfile.categories = nextProfile.categories.map((s) => s.trim()).filter(Boolean);
+      if (!nextProfile.skills || nextProfile.skills.length === 0) {
+        nextProfile.skills = nextProfile.categories;
+      }
     }
 
     if (nextProfile.location) {
@@ -70,7 +84,7 @@ const updateMyProfile = async (req, res) => {
       req.user._id,
       nextProfile,
       { new: true, runValidators: true },
-    ).select('_id name email role phone verified balance escrowBalance avatarUrl bio skills location averageRating totalReviews createdAt updatedAt');
+    ).select('_id name email role phone verified balance escrowBalance avatarUrl bio skills categories location averageRating totalReviews createdAt updatedAt');
 
     return res.status(200).json({
       message: 'Profile updated successfully.',
@@ -82,6 +96,45 @@ const updateMyProfile = async (req, res) => {
   }
 };
 
+const updateMySkills = async (req, res) => {
+  try {
+    if (!req.user?._id) {
+      return res.status(401).json({ message: 'Not authorized.' });
+    }
+
+    const normalizedSkills = Array.isArray(req.body?.skills)
+      ? req.body.skills.map((item) => String(item).trim()).filter(Boolean)
+      : null;
+
+    if (!normalizedSkills) {
+      return res.status(400).json({ message: 'skills must be an array of strings.' });
+    }
+
+    const parsed = updateProfileSchema.safeParse({
+      skills: normalizedSkills,
+      categories: normalizedSkills,
+    });
+
+    if (!parsed.success) {
+      return res.status(400).json({ message: parsed.error.issues[0].message });
+    }
+
+    const updatedUser = await User.findByIdAndUpdate(
+      req.user._id,
+      { skills: parsed.data.skills, categories: parsed.data.categories },
+      { new: true, runValidators: true },
+    ).select('_id name email role phone verified balance escrowBalance avatarUrl bio skills categories location averageRating totalReviews createdAt updatedAt');
+
+    return res.status(200).json({
+      message: 'Skills updated successfully.',
+      user: updatedUser,
+    });
+  } catch (error) {
+    console.error('updateMySkills error:', error);
+    return res.status(500).json({ message: 'Server error while updating skills.' });
+  }
+};
+
 const getUserProfile = async (req, res) => {
   try {
     const { id } = req.params;
@@ -90,7 +143,7 @@ const getUserProfile = async (req, res) => {
       return res.status(400).json({ message: 'User id is invalid.' });
     }
 
-    const user = await User.findById(id).select('_id name email role phone verified usageQuota avatarUrl bio skills location averageRating totalReviews createdAt updatedAt');
+    const user = await User.findById(id).select('_id name email role phone verified usageQuota avatarUrl bio skills categories location averageRating totalReviews createdAt updatedAt');
 
     if (!user) {
       return res.status(404).json({ message: 'User not found.' });
@@ -148,6 +201,7 @@ const getMyTransactions = async (req, res) => {
 
 module.exports = {
   updateMyProfile,
+  updateMySkills,
   getUserProfile,
   getMyTransactions,
 };

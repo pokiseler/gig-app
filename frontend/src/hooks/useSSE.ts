@@ -29,6 +29,7 @@ export function useSSE(token: string | null) {
     let retryDelay = RECONNECT_INIT_MS;
     let retryTimer: ReturnType<typeof setTimeout> | null = null;
     let es: EventSource | null = null;
+    let reconnecting = false;
 
     const handleEvent = (event: MessageEvent, name: string) => {
       try {
@@ -50,25 +51,50 @@ export function useSSE(token: string | null) {
       }
     };
 
+    const clearRetryTimer = () => {
+      if (retryTimer !== null) {
+        clearTimeout(retryTimer);
+        retryTimer = null;
+      }
+    };
+
+    const closeCurrentConnection = () => {
+      es?.close();
+      es = null;
+      esRef.current = null;
+    };
+
+    const scheduleReconnect = (delay: number) => {
+      if (cancelled) return;
+      clearRetryTimer();
+      reconnecting = true;
+      retryTimer = setTimeout(() => {
+        reconnecting = false;
+        connect();
+      }, delay);
+    };
+
     function connect() {
       if (cancelled) return;
+      if (reconnecting) return;
 
+      closeCurrentConnection();
       es = new EventSource(`${SSE_BASE}/api/events?token=${encodeURIComponent(token!)}`);
       esRef.current = es;
 
       es.onopen = () => {
         // Connection (re-)established — reset backoff.
         retryDelay = RECONNECT_INIT_MS;
+        reconnecting = false;
       };
 
       es.onerror = () => {
         if (cancelled) return;
-        es?.close();
-        esRef.current = null;
+        closeCurrentConnection();
         // Exponential backoff before reconnecting.
         const delay = retryDelay;
         retryDelay = Math.min(delay * 2, RECONNECT_MAX_MS);
-        retryTimer = setTimeout(connect, delay);
+        scheduleReconnect(delay);
       };
 
       es.addEventListener("new_review",           (e) => handleEvent(e as MessageEvent, "new_review"));
@@ -79,13 +105,22 @@ export function useSSE(token: string | null) {
       es.addEventListener("new_message",          (e) => handleEvent(e as MessageEvent, "new_message"));
     }
 
+    const onVisibilityChange = () => {
+      if (document.visibilityState !== "visible" || cancelled) return;
+      retryDelay = RECONNECT_INIT_MS;
+      reconnecting = false;
+      clearRetryTimer();
+      connect();
+    };
+
+    document.addEventListener("visibilitychange", onVisibilityChange);
     connect();
 
     return () => {
       cancelled = true;
-      es?.close();
-      esRef.current = null;
-      if (retryTimer !== null) clearTimeout(retryTimer);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+      clearRetryTimer();
+      closeCurrentConnection();
     };
   }, [token]);
 

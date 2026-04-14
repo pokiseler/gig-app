@@ -11,7 +11,6 @@ import { getUserProfile, createReview, type GigItem, type ReviewItem, type AuthU
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog,
@@ -46,6 +45,7 @@ export default function UserProfilePage() {
   const avatarSrc = user?.avatarUrl
     ? `${user.avatarUrl}${user.avatarUrl.includes("?") ? "&" : "?"}v=${encodeURIComponent(user.updatedAt || "")}`
     : "";
+  const profileSkills = user?.skills?.length ? user.skills : (user?.categories ?? []);
 
   useEffect(() => {
     if (!userId) {
@@ -121,9 +121,9 @@ export default function UserProfilePage() {
                     <CardTitle className="text-white">{user.name}</CardTitle>
                     <p className="mt-1 text-sm text-white/50">{user.email}</p>
                     {user.bio ? <p className="mt-3 max-w-2xl text-sm text-white/70">{user.bio}</p> : null}
-                    {user.skills?.length ? (
+                    {profileSkills.length ? (
                       <div className="mt-3 flex flex-wrap gap-2">
-                        {user.skills.map((skill) => (
+                        {profileSkills.map((skill) => (
                           <Badge key={skill} variant="secondary" className="bg-white/10 text-white/70 border-white/10">{skill}</Badge>
                         ))}
                       </div>

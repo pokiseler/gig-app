@@ -13,6 +13,7 @@ export interface AuthUser {
   avatarUrl?: string;
   bio?: string;
   skills?: string[];
+  categories?: string[];
   averageRating?: number;
   totalReviews?: number;
   location?: {
@@ -352,6 +353,14 @@ export async function updateMyProfile(
     method: "PUT",
     headers: buildHeaders(token, false),
     body: payload,
+  });
+}
+
+export async function updateMySkills(token: string, skills: string[]) {
+  return request<{ message: string; user: AuthUser }>("/users/me/skills", {
+    method: "PUT",
+    headers: buildHeaders(token),
+    body: JSON.stringify({ skills }),
   });
 }
 

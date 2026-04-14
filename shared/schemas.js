@@ -107,6 +107,7 @@ const updateProfileSchema = z
     avatarUrl: z.string().trim().url().optional().or(z.literal('')),
     bio: z.string().trim().max(600).optional(),
     skills: z.array(z.string().trim().min(1).max(40)).max(20).optional(),
+    categories: z.array(z.string().trim().min(1).max(40)).max(20).optional(),
     location: z
       .object({
         city: z.string().trim().max(100).optional(),

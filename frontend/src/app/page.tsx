@@ -2,16 +2,26 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { PlusCircle, Search, Zap, Shield, Star, ArrowLeft } from "lucide-react";
 import { NavbarClientOnly } from "@/components/NavbarClientOnly";
 import { RecentWantedGrid } from "@/components/RecentWantedGrid";
 import { useAuth } from "@/hooks/useAuth";
-import { getGigs, type GigItem } from "@/services/api";
+import { getGigs, updateMySkills, type GigItem } from "@/services/api";
+import { MARKET_CATEGORIES } from "@/lib/marketOptions";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 export default function Home() {
-  const { isAuthenticated } = useAuth();
+  const router = useRouter();
+  const { user, token, isAuthenticated, refreshUser } = useAuth();
   const [items, setItems] = useState<GigItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [onboardingOpen, setOnboardingOpen] = useState(false);
+  const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
+  const [saveBusy, setSaveBusy] = useState(false);
+  const [saveError, setSaveError] = useState("");
 
   useEffect(() => {
     getGigs({ postType: "WANTED", sortBy: "createdAt", order: "desc", limit: 6 })
@@ -20,7 +30,55 @@ export default function Home() {
   }, []);
 
 const helpHref = isAuthenticated ? "/post" : "/auth";
-const browseHref = isAuthenticated ? "/gigs" : "/auth";
+  const hasSkills = Boolean((user?.skills?.length ?? 0) > 0 || (user?.categories?.length ?? 0) > 0);
+
+  const toggleSkill = (skill: string) => {
+    setSelectedSkills((prev) => (
+      prev.includes(skill)
+        ? prev.filter((item) => item !== skill)
+        : [...prev, skill]
+    ));
+  };
+
+  const handleBrowseClick = () => {
+    if (!isAuthenticated) {
+      router.push("/auth");
+      return;
+    }
+
+    if (!hasSkills) {
+      setSaveError("");
+      setSelectedSkills(user?.skills?.length ? user.skills : (user?.categories ?? []));
+      setOnboardingOpen(true);
+      return;
+    }
+
+    router.push("/gigs");
+  };
+
+  const handleSaveSkills = async () => {
+    if (!token) {
+      router.push("/auth");
+      return;
+    }
+    if (selectedSkills.length === 0) {
+      setSaveError("יש לבחור לפחות תחום התמחות אחד.");
+      return;
+    }
+
+    setSaveBusy(true);
+    setSaveError("");
+    try {
+      await updateMySkills(token, selectedSkills);
+      await refreshUser();
+      setOnboardingOpen(false);
+      router.push("/gigs");
+    } catch (error) {
+      setSaveError(error instanceof Error ? error.message : "שמירת ההתמחויות נכשלה.");
+    } finally {
+      setSaveBusy(false);
+    }
+  };
 
   return (
     <div
@@ -72,8 +130,9 @@ const browseHref = isAuthenticated ? "/gigs" : "/auth";
           </Link>
 
           {/* Card: מחפש חלתורה */}
-          <Link
-            href={browseHref}
+          <button
+            type="button"
+            onClick={handleBrowseClick}
             className="group relative flex flex-col items-center gap-5 rounded-3xl border border-white/10 bg-white/5 p-8 text-center shadow-lg backdrop-blur-md transition-all duration-300 hover:scale-[1.02] hover:border-white/20 hover:bg-white/10 hover:shadow-xl hover:shadow-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30"
           >
             <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-neutral-700 to-neutral-900 shadow-lg shadow-neutral-400/30 transition-transform duration-300 group-hover:scale-110">
@@ -89,7 +148,7 @@ const browseHref = isAuthenticated ? "/gigs" : "/auth";
               גלה חלתורות
               <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
             </span>
-          </Link>
+          </button>
         </div>
       </section>
 
@@ -121,6 +180,42 @@ const browseHref = isAuthenticated ? "/gigs" : "/auth";
         </div>
         <RecentWantedGrid items={items} loading={loading} />
       </section>
+
+      <Dialog open={onboardingOpen} onOpenChange={setOnboardingOpen}>
+        <DialogContent dir="rtl" className="glass-heavy border border-white/10 text-right sm:max-w-xl">
+          <DialogHeader>
+            <DialogTitle className="text-white">במה אתה מתמקצע?</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-white/60">בחר תחומי התמחות כדי שנציג לך חלתורות רלוונטיות.</p>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {MARKET_CATEGORIES.map((category) => {
+              const active = selectedSkills.includes(category);
+              return (
+                <Badge
+                  key={category}
+                  onClick={() => toggleSkill(category)}
+                  className={`cursor-pointer rounded-full border px-3 py-1.5 text-sm ${
+                    active
+                      ? "border-blue-400/50 bg-blue-500/20 text-blue-200"
+                      : "border-white/10 bg-white/5 text-white/70 hover:bg-white/10"
+                  }`}
+                >
+                  {category}
+                </Badge>
+              );
+            })}
+          </div>
+          {saveError ? <p className="text-sm text-red-400">{saveError}</p> : null}
+          <div className="mt-2 flex justify-end gap-2">
+            <Button variant="outline" onClick={() => setOnboardingOpen(false)} disabled={saveBusy}>
+              סגירה
+            </Button>
+            <Button onClick={handleSaveSkills} disabled={saveBusy}>
+              {saveBusy ? "שומר..." : "שמירה והמשך"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

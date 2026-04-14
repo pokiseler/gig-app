@@ -5,7 +5,8 @@ import type { GigFilters } from "@/services/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { MARKET_CATEGORIES } from "@/lib/marketOptions";
+import { CityAutocomplete } from "@/components/CityAutocomplete";
+import { ISRAEL_CITIES, MARKET_CATEGORIES } from "@/lib/marketOptions";
 import {
   Select,
   SelectContent,
@@ -123,12 +124,13 @@ export function GigFilters({ onFilter }: GigFiltersProps) {
 
       <div className="mb-4">
         <Label className="mb-1 block text-xs font-medium text-white/50">עיר</Label>
-        <Input
-          type="text"
-          placeholder="לדוגמה: תל אביב"
+        <CityAutocomplete
           value={filters.city}
-          onChange={(e) => set("city", e.target.value)}
+          onChange={(value) => set("city", value)}
+          options={ISRAEL_CITIES}
+          placeholder="לדוגמה: תל אביב"
           className="w-full"
+          clearAriaLabel="נקה סינון עיר"
         />
       </div>
 
