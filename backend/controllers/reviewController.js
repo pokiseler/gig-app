@@ -32,8 +32,17 @@ const createReview = async (req, res) => {
         return res.status(404).json({ message: 'Gig not found.' });
       }
       const gigOwnerId = gigDoc.author ? gigDoc.author.toString() : gigDoc.postedBy?.toString();
-      if (!gigOwnerId || gigOwnerId !== targetUser) {
-        return res.status(400).json({ message: 'targetUser must match the gig owner.' });
+      const gigFreelancerId = gigDoc.freelancer ? gigDoc.freelancer.toString() : null;
+      const reviewerId = req.user._id.toString();
+      const allowedTargets = [gigOwnerId, gigFreelancerId].filter(Boolean);
+      const allowedReviewers = [gigOwnerId, gigFreelancerId].filter(Boolean);
+
+      if (!allowedTargets.includes(targetUser)) {
+        return res.status(400).json({ message: 'targetUser must be one of the gig participants.' });
+      }
+
+      if (!allowedReviewers.includes(reviewerId)) {
+        return res.status(403).json({ message: 'Only gig participants can leave this review.' });
       }
     }
 

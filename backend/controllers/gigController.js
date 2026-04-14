@@ -778,6 +778,14 @@ const markAsFinished = async (req, res) => {
       .populate('client', 'name email')
       .populate('freelancer', 'name email');
 
+    if (refreshedGig?.client?._id && !payoutResult) {
+      sseManager.send(String(refreshedGig.client._id), 'gig_waiting_client_confirmation', {
+        message: `${refreshedGig.freelancer?.name || 'הפרילנסר'} דיווח על סיום החלתורה "${refreshedGig.title}".`,
+        gigId: refreshedGig._id,
+        gigTitle: refreshedGig.title,
+      });
+    }
+
     return res.status(200).json({
       message: payoutResult
         ? 'שני הצדדים אישרו. החלתורה הושלמה!'

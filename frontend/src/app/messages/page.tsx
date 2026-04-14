@@ -11,7 +11,7 @@ import { getChatThreads, type ChatThread } from "@/services/api";
 const Navbar = dynamic(() => import("@/components/Navbar").then((m) => m.Navbar), { ssr: false });
 
 export default function MessagesPage() {
-  const { token, isAuthenticated } = useAuth();
+  const { token } = useAuth();
   const { openChat } = useChat();
   const { notifications } = useSSEContext();
 

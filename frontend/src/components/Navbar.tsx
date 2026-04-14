@@ -15,6 +15,7 @@ import {
   denyGigRequest,
   getChatThreads,
   getMyGigRequests,
+  getMyTasks,
   type GigRequestItem,
 } from "@/services/api";
 
@@ -30,6 +31,7 @@ export function Navbar() {
   const [busyRequestKey, setBusyRequestKey] = useState("");
   const [requestError, setRequestError] = useState("");
   const [unreadMsgCount, setUnreadMsgCount] = useState(0);
+  const [pendingClientConfirmations, setPendingClientConfirmations] = useState(0);
   const prevNotifCountRef = useRef(0);
 
   const closeAll = () => {
@@ -55,6 +57,39 @@ export function Navbar() {
   useEffect(() => {
     if (notifications.some((n) => n.event === "gig_request")) void loadRequests();
   }, [notifications, loadRequests]);
+
+  const loadPendingClientConfirmations = useCallback(async () => {
+    if (!token || !isAuthenticated) {
+      setPendingClientConfirmations(0);
+      return;
+    }
+    try {
+      const result = await getMyTasks(token);
+      const count = (result.gigs || []).filter((gig) => (
+        gig.status === "in_progress"
+        && gig.freelancerConfirmed === true
+        && gig.clientConfirmed === false
+        && gig.client?._id === user?._id
+      )).length;
+      setPendingClientConfirmations(count);
+    } catch {
+      setPendingClientConfirmations(0);
+    }
+  }, [token, isAuthenticated, user?._id]);
+
+  useEffect(() => {
+    void loadPendingClientConfirmations();
+  }, [loadPendingClientConfirmations]);
+
+  useEffect(() => {
+    if (notifications.some((n) =>
+      n.event === "gig_waiting_client_confirmation"
+      || n.event === "gig_request_accepted"
+      || n.event === "gig_request_denied"
+    )) {
+      void loadPendingClientConfirmations();
+    }
+  }, [notifications, loadPendingClientConfirmations]);
 
   // Load initial unread message count from DB
   useEffect(() => {
@@ -159,6 +194,9 @@ export function Navbar() {
           {isAuthenticated && (
             <>
               <Link href="/tasks" className={navLink}><ClipboardList className="h-4 w-4" />משימות</Link>
+              {pendingClientConfirmations > 0 ? (
+                <span className="-mr-3 -ml-1 inline-block h-2.5 w-2.5 rounded-full bg-red-500" title="משימות שממתינות לאישור" />
+              ) : null}
               <Link href="/messages" onClick={() => setUnreadMsgCount(0)} className={`relative ${navLink}`}>
                 <MessageSquare className="h-4 w-4" />
                 הודעות
@@ -380,6 +418,9 @@ export function Navbar() {
               >
                 <span className="text-white/50">{icon}</span>
                 {label}
+                {href === "/tasks" && pendingClientConfirmations > 0 ? (
+                  <span className="mr-auto h-2.5 w-2.5 rounded-full bg-red-500" />
+                ) : null}
               </Link>
             ))}
 

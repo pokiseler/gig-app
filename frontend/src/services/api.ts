@@ -49,6 +49,7 @@ export interface GigItem {
   tipAmount?: number;
   tipMethod?: "cash" | "bit";
   createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface TransactionItem {

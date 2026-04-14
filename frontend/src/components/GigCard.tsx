@@ -11,7 +11,7 @@ interface GigCardProps {
 }
 
 export function GigCard({ gig, onOpen }: GigCardProps) {
-  const { title, description, category, location, author, postedBy, createdAt, tipAmount, tipMethod } = gig;
+  const { title, description, category, location, author, postedBy, createdAt, tipAmount } = gig;
   const displayAuthor = author || postedBy;
   const formattedDate = createdAt ? createdAt.slice(0, 10) : null;
 

@@ -13,7 +13,7 @@ import {
 
 export function ChatDrawer() {
   const { chatTarget, openChat, closeChat } = useChat();
-  const { user, token, isAuthenticated } = useAuth();
+  const { user, token } = useAuth();
   const { notifications } = useSSEContext();
 
   const [messages, setMessages] = useState<ChatMessage[]>([]);

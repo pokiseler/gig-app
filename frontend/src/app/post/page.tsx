@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Controller, useForm } from "react-hook-form";
+import { Controller, useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import dynamic from "next/dynamic";
@@ -49,12 +49,11 @@ export default function PostPage() {
     formState: { errors, isSubmitting },
     reset,
     setValue,
-    watch,
   } = useForm<PostFormFields>({
     resolver: zodResolver(postFormSchema),
     defaultValues: { category: "", city: "", tipAmount: 0, tipMethod: "cash" as const },
   });
-  const selectedCategory = watch("category");
+  const selectedCategory = useWatch({ control, name: "category" });
 
   const availableCategories = [...MARKET_CATEGORIES, ...customCategories];
 

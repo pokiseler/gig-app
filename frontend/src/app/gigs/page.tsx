@@ -15,7 +15,6 @@ import {
 } from "@/services/api";
 import { useAuth } from "@/hooks/useAuth";
 import dynamic from "next/dynamic";
-import { Separator } from "@/components/ui/separator";
 
 const Navbar = dynamic(() => import("@/components/Navbar").then((m) => m.Navbar), {
   ssr: false,

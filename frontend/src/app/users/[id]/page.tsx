@@ -192,6 +192,7 @@ export default function UserProfilePage() {
                         <p className="font-medium text-white">
                           {"⭐".repeat(Math.round(review.rating))} {review.rating.toFixed(1)} מאת {review.reviewer?.name}
                         </p>
+                        {review.gigId?.title ? <p className="mt-1 text-xs text-blue-300/80">על החלתורה: {review.gigId.title}</p> : null}
                         {review.comment ? <p className="mt-1 text-sm text-white/60">{review.comment}</p> : null}
                       </div>
                     ))}
