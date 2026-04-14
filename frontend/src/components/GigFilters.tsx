@@ -125,7 +125,7 @@ export function GigFilters({ onFilter }: GigFiltersProps) {
       <div className="mb-4">
         <Label className="mb-1 block text-xs font-medium text-white/50">עיר</Label>
         <CityAutocomplete
-          value={filters.city}
+          value={filters.city ?? ""}
           onChange={(value) => set("city", value)}
           options={ISRAEL_CITIES}
           placeholder="לדוגמה: תל אביב"
