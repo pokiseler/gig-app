@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { PlusCircle, Search, Zap, Shield, Star, ArrowLeft } from "lucide-react";
+import { Plus, PlusCircle, Search, Zap, Shield, Star, ArrowLeft } from "lucide-react";
 import { NavbarClientOnly } from "@/components/NavbarClientOnly";
 import { RecentWantedGrid } from "@/components/RecentWantedGrid";
 import { useAuth } from "@/hooks/useAuth";
@@ -12,6 +12,7 @@ import { MARKET_CATEGORIES } from "@/lib/marketOptions";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 
 export default function Home() {
   const router = useRouter();
@@ -20,6 +21,8 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [onboardingOpen, setOnboardingOpen] = useState(false);
   const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
+  const [customSkill, setCustomSkill] = useState("");
+  const [customSkills, setCustomSkills] = useState<string[]>([]);
   const [saveBusy, setSaveBusy] = useState(false);
   const [saveError, setSaveError] = useState("");
 
@@ -40,6 +43,18 @@ const helpHref = isAuthenticated ? "/post" : "/auth";
     ));
   };
 
+  const availableSkills = [...MARKET_CATEGORIES, ...customSkills];
+
+  const addCustomSkill = () => {
+    const next = customSkill.trim();
+    if (!next) return;
+    if (!availableSkills.includes(next)) {
+      setCustomSkills((prev) => [...prev, next]);
+    }
+    setSelectedSkills((prev) => (prev.includes(next) ? prev : [...prev, next]));
+    setCustomSkill("");
+  };
+
   const handleBrowseClick = () => {
     if (!isAuthenticated) {
       router.push("/auth");
@@ -49,6 +64,7 @@ const helpHref = isAuthenticated ? "/post" : "/auth";
     if (!hasSkills) {
       setSaveError("");
       setSelectedSkills(user?.skills?.length ? user.skills : (user?.categories ?? []));
+      setCustomSkill("");
       setOnboardingOpen(true);
       return;
     }
@@ -72,6 +88,8 @@ const helpHref = isAuthenticated ? "/post" : "/auth";
       await updateMySkills(token, selectedSkills);
       await refreshUser();
       setOnboardingOpen(false);
+      setCustomSkills([]);
+      setCustomSkill("");
       router.push("/gigs");
     } catch (error) {
       setSaveError(error instanceof Error ? error.message : "שמירת ההתמחויות נכשלה.");
@@ -187,8 +205,24 @@ const helpHref = isAuthenticated ? "/post" : "/auth";
             <DialogTitle className="text-white">במה אתה מתמקצע?</DialogTitle>
           </DialogHeader>
           <p className="text-sm text-white/60">בחר תחומי התמחות כדי שנציג לך חלתורות רלוונטיות.</p>
+          <div className="mt-1 flex items-center gap-2">
+            <Input
+              value={customSkill}
+              onChange={(event) => setCustomSkill(event.target.value)}
+              placeholder="הוסף תחום מותאם אישית"
+              onKeyDown={(event) => {
+                if (event.key === "Enter") {
+                  event.preventDefault();
+                  addCustomSkill();
+                }
+              }}
+            />
+            <Button type="button" variant="outline" size="icon-sm" onClick={addCustomSkill} aria-label="הוסף תחום התמחות">
+              <Plus className="size-4" />
+            </Button>
+          </div>
           <div className="mt-2 flex flex-wrap gap-2">
-            {MARKET_CATEGORIES.map((category) => {
+            {availableSkills.map((category) => {
               const active = selectedSkills.includes(category);
               return (
                 <Badge

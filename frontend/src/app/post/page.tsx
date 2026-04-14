@@ -5,11 +5,13 @@ import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import dynamic from "next/dynamic";
+import { Plus } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { createGig } from "@/services/api";
 import { MARKET_CATEGORIES, ISRAEL_CITIES } from "@/lib/marketOptions";
 import { CityAutocomplete } from "@/components/CityAutocomplete";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -37,6 +39,8 @@ export default function PostPage() {
   const postType = "WANTED" as const;
   const [serverMessage, setServerMessage] = useState("");
   const [isPostError, setIsPostError] = useState(false);
+  const [customCategory, setCustomCategory] = useState("");
+  const [customCategories, setCustomCategories] = useState<string[]>([]);
 
   const {
     register,
@@ -44,10 +48,25 @@ export default function PostPage() {
     control,
     formState: { errors, isSubmitting },
     reset,
+    setValue,
+    watch,
   } = useForm<PostFormFields>({
     resolver: zodResolver(postFormSchema),
     defaultValues: { category: "", city: "", tipAmount: 0, tipMethod: "cash" as const },
   });
+  const selectedCategory = watch("category");
+
+  const availableCategories = [...MARKET_CATEGORIES, ...customCategories];
+
+  const addCustomCategory = () => {
+    const next = customCategory.trim();
+    if (!next) return;
+    if (!availableCategories.includes(next)) {
+      setCustomCategories((prev) => [...prev, next]);
+    }
+    setValue("category", next, { shouldValidate: true, shouldDirty: true });
+    setCustomCategory("");
+  };
 
   const onSubmit = async (data: PostFormFields) => {
     setServerMessage("");
@@ -73,6 +92,8 @@ export default function PostPage() {
       setIsPostError(false);
       setServerMessage("הפוסט פורסם בהצלחה! מעביר לשוק...");
       reset();
+      setCustomCategories([]);
+      setCustomCategory("");
       setTimeout(() => { window.location.href = "/gigs"; }, 1200);
     } catch (error) {
       setIsPostError(true);
@@ -145,27 +166,40 @@ export default function PostPage() {
               <div>
                 <div>
                   <Label className="mb-1 block">קטגוריה</Label>
-                  <Controller
-                    control={control}
-                    name="category"
-                    render={({ field }) => (
-                      <Select
-                        value={field.value ?? ""}
-                        onValueChange={(value) => {
-                          field.onChange(value || "");
-                        }}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="בחר קטגוריה" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {MARKET_CATEGORIES.map((item) => (
-                            <SelectItem key={item} value={item}>{item}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    )}
-                  />
+                  <div className="flex flex-wrap gap-2 rounded-xl border border-white/10 bg-white/5 p-3">
+                    {availableCategories.map((item) => {
+                      const active = selectedCategory === item;
+                      return (
+                        <Badge
+                          key={item}
+                          onClick={() => setValue("category", item, { shouldValidate: true, shouldDirty: true })}
+                          className={`cursor-pointer rounded-full border px-3 py-1.5 text-sm ${
+                            active
+                              ? "border-blue-400/50 bg-blue-500/20 text-blue-200"
+                              : "border-white/10 bg-white/5 text-white/70 hover:bg-white/10"
+                          }`}
+                        >
+                          {item}
+                        </Badge>
+                      );
+                    })}
+                  </div>
+                  <div className="mt-2 flex items-center gap-2">
+                    <Input
+                      value={customCategory}
+                      onChange={(event) => setCustomCategory(event.target.value)}
+                      placeholder="הוסף קטגוריה מותאמת אישית"
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter") {
+                          event.preventDefault();
+                          addCustomCategory();
+                        }
+                      }}
+                    />
+                    <Button type="button" variant="outline" size="icon-sm" onClick={addCustomCategory} aria-label="הוסף קטגוריה">
+                      <Plus className="size-4" />
+                    </Button>
+                  </div>
                   {errors.category && <p className="mt-1 text-xs text-red-600">{errors.category.message}</p>}
                 </div>
               </div>
