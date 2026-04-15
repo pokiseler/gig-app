@@ -115,8 +115,8 @@ export function ChatDrawer() {
 
       {/* Drawer */}
       <div
-        className="fixed bottom-4 left-4 z-[70] flex h-[420px] w-[calc(100vw-2rem)] flex-col overflow-hidden rounded-3xl border border-white/10 shadow-2xl sm:left-auto sm:right-4 sm:h-[520px] sm:w-[380px]"
-        style={{ maxHeight: "calc(100vh - 96px)" }}
+        className="fixed inset-x-0 bottom-0 top-0 z-[70] flex h-[100dvh] w-screen flex-col overflow-hidden border border-white/10 shadow-2xl sm:bottom-4 sm:left-auto sm:right-4 sm:top-auto sm:h-[520px] sm:w-[380px] sm:rounded-3xl"
+        style={{ maxHeight: "100dvh" }}
         dir="rtl"
       >
         {/* Header */}
@@ -185,7 +185,7 @@ export function ChatDrawer() {
         </div>
 
         {/* Input */}
-        <div className="flex items-end gap-2 border-t border-white/10 bg-slate-900/95 px-3 py-3 backdrop-blur-xl">
+        <div className="flex items-end gap-2 border-t border-white/10 bg-slate-900/95 px-3 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur-xl">
           <textarea
             ref={inputRef}
             value={input}

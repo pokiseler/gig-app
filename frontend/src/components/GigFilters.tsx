@@ -58,11 +58,13 @@ export function GigFilters({ onFilter }: GigFiltersProps) {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onFilter(filters);
+    setOpen(false);
   };
 
   const handleReset = () => {
     setFilters(INITIAL);
     onFilter(INITIAL);
+    setOpen(false);
   };
 
   const sortValue = `${filters.sortBy}_${filters.order}`;

@@ -20,8 +20,8 @@ const locationSchema = z.object({
 
 const optionalLocationSchema = z
   .object({
-    city: z.string().trim().max(100).optional().default(''),
-    address: z.string().trim().max(300).optional().default(''),
+    city: z.string().trim().max(100).optional(),
+    address: z.string().trim().max(300).optional(),
   })
   .optional();
 
@@ -67,8 +67,22 @@ const updateGigSchema = z
     tipAmount: z.coerce.number().min(0).max(10000).optional(),
     tipMethod: z.enum(['cash', 'bit']).optional(),
   })
-  .refine((payload) => Object.keys(payload).length > 0, {
-    message: 'At least one field must be provided for update.',
+  .refine((payload) => {
+    return Object.entries(payload).some(([key, value]) => {
+      if (key === 'location') {
+        if (!value || typeof value !== 'object') {
+          return false;
+        }
+        const location = value;
+        return Boolean(
+          (typeof location.city === 'string' && location.city.trim().length > 0)
+          || (typeof location.address === 'string' && location.address.trim().length > 0),
+        );
+      }
+      return value !== undefined;
+    });
+  }, {
+    message: 'At least one non-empty field must be provided for update.',
   });
 
 const filterGigsSchema = z.object({
@@ -115,8 +129,22 @@ const updateProfileSchema = z
       })
       .optional(),
   })
-  .refine((payload) => Object.keys(payload).length > 0, {
-    message: 'At least one profile field is required.',
+  .refine((payload) => {
+    return Object.entries(payload).some(([key, value]) => {
+      if (key === 'location') {
+        if (!value || typeof value !== 'object') {
+          return false;
+        }
+        const location = value;
+        return Boolean(
+          (typeof location.city === 'string' && location.city.trim().length > 0)
+          || (typeof location.address === 'string' && location.address.trim().length > 0),
+        );
+      }
+      return value !== undefined;
+    });
+  }, {
+    message: 'At least one non-empty profile field is required.',
   });
 
 module.exports = {

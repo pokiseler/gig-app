@@ -28,7 +28,10 @@ const postFormSchema = z.object({
   city:        z.string().trim().min(2,  "יש להזין עיר"),
   address:     z.string().trim().min(2,  "יש להזין כתובת"),
   tags:        z.string().trim().optional(),
-  tipAmount:   z.number().min(0, "הסכום לא יכול להיות שלילי").max(10000).optional(),
+  tipAmount:   z.preprocess(
+    (value) => (typeof value === "number" && Number.isNaN(value) ? undefined : value),
+    z.number().min(0, "הסכום לא יכול להיות שלילי").max(10000).optional(),
+  ),
   tipMethod:   z.enum(["cash", "bit"]).optional(),
 });
 
@@ -51,7 +54,7 @@ export default function PostPage() {
     setValue,
   } = useForm<PostFormFields>({
     resolver: zodResolver(postFormSchema),
-    defaultValues: { category: "", city: "", tipAmount: 0, tipMethod: "cash" as const },
+    defaultValues: { category: "", city: "", tipAmount: undefined, tipMethod: "cash" as const },
   });
   const selectedCategory = useWatch({ control, name: "category" });
 
@@ -130,6 +133,7 @@ export default function PostPage() {
                   <Label className="mb-1 block">טיפ ב-₪ <span className="font-normal text-neutral-500">(אופציונלי)</span></Label>
                   <Input
                     type="number"
+                    inputMode="numeric"
                     min={0}
                     step={1}
                     placeholder="0"
