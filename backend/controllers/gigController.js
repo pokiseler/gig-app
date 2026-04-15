@@ -776,13 +776,21 @@ const markAsFinished = async (req, res) => {
     const refreshedGig = await Gig.findById(id)
       .populate('author', 'name role averageRating totalReviews')
       .populate('client', 'name email')
-      .populate('freelancer', 'name email');
+      .populate('freelancer', 'name email averageRating totalReviews');
 
     if (refreshedGig?.client?._id && !payoutResult) {
       sseManager.send(String(refreshedGig.client._id), 'gig_waiting_client_confirmation', {
         message: `${refreshedGig.freelancer?.name || 'הפרילנסר'} דיווח על סיום החלתורה "${refreshedGig.title}".`,
         gigId: refreshedGig._id,
         gigTitle: refreshedGig.title,
+        freelancerId: refreshedGig.freelancer?._id ? String(refreshedGig.freelancer._id) : null,
+        freelancerName: refreshedGig.freelancer?.name || null,
+        freelancerRating: typeof refreshedGig.freelancer?.averageRating === 'number'
+          ? refreshedGig.freelancer.averageRating
+          : null,
+        freelancerTotalReviews: typeof refreshedGig.freelancer?.totalReviews === 'number'
+          ? refreshedGig.freelancer.totalReviews
+          : 0,
       });
     }
 
@@ -853,7 +861,7 @@ const confirmReceipt = async (req, res) => {
     const refreshedGig = await Gig.findById(id)
       .populate('author', 'name role averageRating totalReviews')
       .populate('client', 'name email')
-      .populate('freelancer', 'name email');
+      .populate('freelancer', 'name email averageRating totalReviews');
 
     return res.status(200).json({
       message: payoutResult
@@ -899,7 +907,7 @@ const getMyTasks = async (req, res) => {
     })
       .populate('author', 'name role averageRating totalReviews')
       .populate('client', 'name email')
-      .populate('freelancer', 'name email')
+      .populate('freelancer', 'name email averageRating totalReviews')
       .sort({ updatedAt: -1 })
       .limit(100);
 

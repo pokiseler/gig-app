@@ -93,7 +93,7 @@ export interface ReviewItem {
 
 export interface ChatMessage {
   _id: string;
-  senderId: { _id: string; name: string; avatarUrl?: string } | string;
+  senderId: { _id: string; name: string; avatarUrl?: string; averageRating?: number; totalReviews?: number } | string;
   receiverId: { _id: string; name: string } | string;
   content: string;
   read: boolean;
@@ -104,6 +104,8 @@ export interface ChatThread {
   partnerId: string;
   partnerName: string;
   partnerAvatar?: string;
+  partnerRating?: number | null;
+  partnerTotalReviews?: number;
   lastMessage: string;
   lastAt: string;
   unread: number;
@@ -382,7 +384,7 @@ export async function getChatThreads(token: string) {
 }
 
 export async function getChatThread(token: string, partnerId: string) {
-  return request<{ messages: ChatMessage[]; partner: { _id: string; name: string; avatarUrl?: string } | null }>(
+  return request<{ messages: ChatMessage[]; partner: { _id: string; name: string; avatarUrl?: string; averageRating?: number; totalReviews?: number } | null }>(
     `/messages/${partnerId}`,
     { method: "GET", headers: buildHeaders(token) },
   );

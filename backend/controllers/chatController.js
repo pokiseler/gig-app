@@ -53,7 +53,7 @@ const getThreads = async (req, res) => {
 
     const partnerIds = threads.map((t) => t._id);
     const partners = await User.find({ _id: { $in: partnerIds } }).select(
-      'name avatarUrl',
+      'name avatarUrl averageRating totalReviews',
     );
     const partnerMap = {};
     partners.forEach((p) => {
@@ -64,6 +64,8 @@ const getThreads = async (req, res) => {
       partnerId: t._id,
       partnerName: partnerMap[t._id.toString()]?.name ?? 'Unknown',
       partnerAvatar: partnerMap[t._id.toString()]?.avatarUrl ?? '',
+      partnerRating: partnerMap[t._id.toString()]?.averageRating ?? null,
+      partnerTotalReviews: partnerMap[t._id.toString()]?.totalReviews ?? 0,
       lastMessage: t.lastMessage,
       lastAt: t.lastAt,
       unread: t.unread,
@@ -99,7 +101,7 @@ const getThread = async (req, res) => {
     })
       .sort({ createdAt: 1 })
       .limit(200)
-      .populate('senderId', 'name avatarUrl')
+      .populate('senderId', 'name avatarUrl averageRating totalReviews')
       .lean();
 
     // Mark incoming unread messages as read
@@ -108,7 +110,7 @@ const getThread = async (req, res) => {
       { $set: { read: true } },
     );
 
-    const partner = await User.findById(partnerId).select('name avatarUrl').lean();
+    const partner = await User.findById(partnerId).select('name avatarUrl averageRating totalReviews').lean();
 
     return res.json({ messages, partner });
   } catch (err) {

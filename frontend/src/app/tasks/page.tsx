@@ -256,7 +256,15 @@ export default function TasksPage() {
                             ) : "-"}
                             {" | "}פרילנסר:{" "}
                             {gig.freelancer?._id ? (
-                              <Link href={`/users/${gig.freelancer._id}`} className="text-blue-400/80 hover:underline hover:text-blue-300">{gig.freelancer.name || "-"}</Link>
+                              <>
+                                <Link href={`/users/${gig.freelancer._id}`} className="text-blue-400/80 hover:underline hover:text-blue-300">{gig.freelancer.name || "-"}</Link>
+                                {typeof gig.freelancer.averageRating === "number" ? (
+                                  <span className="mr-1 text-amber-300">
+                                    ⭐ {gig.freelancer.averageRating.toFixed(1)}
+                                    {typeof gig.freelancer.totalReviews === "number" && gig.freelancer.totalReviews > 0 ? ` (${gig.freelancer.totalReviews})` : ""}
+                                  </span>
+                                ) : null}
+                              </>
                             ) : "-"}
                           </>
                         )}
@@ -326,7 +334,15 @@ export default function TasksPage() {
                         ) : "-"}
                         {" | "}פרילנסר:{" "}
                         {gig.freelancer?._id ? (
-                          <Link href={`/users/${gig.freelancer._id}`} className="text-blue-400/80 hover:underline hover:text-blue-300">{gig.freelancer.name || "-"}</Link>
+                          <>
+                            <Link href={`/users/${gig.freelancer._id}`} className="text-blue-400/80 hover:underline hover:text-blue-300">{gig.freelancer.name || "-"}</Link>
+                            {typeof gig.freelancer.averageRating === "number" ? (
+                              <span className="mr-1 text-amber-300">
+                                ⭐ {gig.freelancer.averageRating.toFixed(1)}
+                                {typeof gig.freelancer.totalReviews === "number" && gig.freelancer.totalReviews > 0 ? ` (${gig.freelancer.totalReviews})` : ""}
+                              </span>
+                            ) : null}
+                          </>
                         ) : "-"}
                       </div>
                     </div>

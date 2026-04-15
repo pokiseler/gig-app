@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { Send, X, MessageSquare } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useChat } from "@/context/ChatContext";
@@ -20,6 +21,8 @@ export function ChatDrawer() {
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
   const [loadError, setLoadError] = useState("");
+  const [partnerRating, setPartnerRating] = useState<number | null>(null);
+  const [partnerTotalReviews, setPartnerTotalReviews] = useState(0);
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const seenNotifIds = useRef<Set<string>>(new Set());
@@ -31,6 +34,8 @@ export function ChatDrawer() {
     try {
       const res = await getChatThread(token, chatTarget.partnerId);
       setMessages(res.messages);
+      setPartnerRating(typeof res.partner?.averageRating === "number" ? res.partner.averageRating : null);
+      setPartnerTotalReviews(typeof res.partner?.totalReviews === "number" ? res.partner.totalReviews : 0);
     } catch (err) {
       setLoadError(err instanceof Error ? err.message : "טעינת השיחה נכשלה");
     }
@@ -42,6 +47,8 @@ export function ChatDrawer() {
       setInput("");
     } else {
       setMessages([]);
+      setPartnerRating(null);
+      setPartnerTotalReviews(0);
     }
   }, [chatTarget, loadThread]);
 
@@ -126,8 +133,20 @@ export function ChatDrawer() {
               <MessageSquare className="h-4 w-4" />
             </div>
             <div>
-              <p className="text-sm font-semibold text-white">{chatTarget.partnerName}</p>
-              <p className="text-xs text-white/40">שיחה פרטית</p>
+              <p className="text-sm font-semibold text-white">
+                <Link
+                  href={`/users/${chatTarget.partnerId}`}
+                  onClick={closeChat}
+                  className="hover:text-blue-300 hover:underline"
+                >
+                  {chatTarget.partnerName}
+                </Link>
+              </p>
+              <p className="text-xs text-white/40">
+                {partnerRating !== null
+                  ? `⭐ ${partnerRating.toFixed(1)}${partnerTotalReviews > 0 ? ` (${partnerTotalReviews})` : ""}`
+                  : "שיחה פרטית"}
+              </p>
             </div>
           </div>
           <button
@@ -155,6 +174,8 @@ export function ChatDrawer() {
             const isOwn = senderId === user?._id;
             const senderName =
               typeof msg.senderId === "object" ? msg.senderId.name : undefined;
+            const senderProfileId =
+              typeof msg.senderId === "object" ? msg.senderId._id : null;
             return (
               <div
                 key={msg._id}
@@ -167,7 +188,18 @@ export function ChatDrawer() {
                       : "rounded-tl-sm bg-white/10 text-white"
                   }`}
                 >
-                  {!isOwn && senderName && (
+                  {!isOwn && senderName && senderProfileId && (
+                    <p className="mb-0.5 text-xs font-medium text-blue-300">
+                      <Link
+                        href={`/users/${senderProfileId}`}
+                        onClick={closeChat}
+                        className="hover:underline"
+                      >
+                        {senderName}
+                      </Link>
+                    </p>
+                  )}
+                  {!isOwn && senderName && !senderProfileId && (
                     <p className="mb-0.5 text-xs font-medium text-blue-300">{senderName}</p>
                   )}
                   <p className="whitespace-pre-wrap break-words">{msg.content}</p>

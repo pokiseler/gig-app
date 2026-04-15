@@ -102,6 +102,7 @@ export function useSSE(token: string | null) {
       es.addEventListener("gig_request",          (e) => handleEvent(e as MessageEvent, "gig_request"));
       es.addEventListener("gig_request_accepted", (e) => handleEvent(e as MessageEvent, "gig_request_accepted"));
       es.addEventListener("gig_request_denied",   (e) => handleEvent(e as MessageEvent, "gig_request_denied"));
+      es.addEventListener("gig_waiting_client_confirmation", (e) => handleEvent(e as MessageEvent, "gig_waiting_client_confirmation"));
       es.addEventListener("new_message",          (e) => handleEvent(e as MessageEvent, "new_message"));
     }
 

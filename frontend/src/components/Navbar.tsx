@@ -115,6 +115,51 @@ export function Navbar() {
     [pendingRequests.length, notifications.length],
   );
 
+  const renderSseNotification = (n: typeof notifications[number]) => {
+    if (n.event === "gig_waiting_client_confirmation") {
+      const freelancerId = typeof n.data.freelancerId === "string" ? n.data.freelancerId : "";
+      const freelancerName = typeof n.data.freelancerName === "string" ? n.data.freelancerName : "הפרילנסר";
+      const freelancerRating = typeof n.data.freelancerRating === "number" ? n.data.freelancerRating : null;
+      const freelancerTotalReviews = typeof n.data.freelancerTotalReviews === "number" ? n.data.freelancerTotalReviews : 0;
+      return (
+        <div key={n.id} className="rounded-xl border border-white/15 bg-white/10 p-2.5 text-right text-xs text-white">
+          <p className="leading-relaxed">{n.message}</p>
+          <div className="mt-1.5 flex items-center justify-between gap-2">
+            <div className="text-[11px] text-white/70">
+              <span>פרילנסר: </span>
+              {freelancerId ? (
+                <Link href={`/users/${freelancerId}`} onClick={closeAll} className="text-blue-300 hover:underline">
+                  {freelancerName}
+                </Link>
+              ) : (
+                <span>{freelancerName}</span>
+              )}
+              {freelancerRating !== null ? (
+                <span className="mr-1 text-amber-300">
+                  {" "}
+                  • ⭐ {freelancerRating.toFixed(1)}{freelancerTotalReviews > 0 ? ` (${freelancerTotalReviews})` : ""}
+                </span>
+              ) : null}
+            </div>
+            <button
+              type="button"
+              onClick={() => dismiss(n.id)}
+              className="shrink-0 rounded-md border border-white/15 px-2 py-0.5 text-[11px] text-white/60 hover:text-white"
+            >
+              סגור
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <button key={n.id} type="button" onClick={() => dismiss(n.id)} className="w-full rounded-xl border border-white/15 bg-white/10 p-2.5 text-right text-xs text-white hover:bg-white/15">
+        {n.message}
+      </button>
+    );
+  };
+
   const handleAcceptRequest = async (req: GigRequestItem) => {
     if (!token) return;
     const key = `${req.gigId}:${req.applicantId}:accept`;
@@ -275,11 +320,7 @@ export function Navbar() {
                               </div>
                             );
                           })}
-                          {notifications.map((n) => (
-                            <button key={n.id} type="button" onClick={() => dismiss(n.id)} className="w-full rounded-xl border border-white/15 bg-white/10 p-2.5 text-right text-xs text-white hover:bg-white/15">
-                              {n.message}
-                            </button>
-                          ))}
+                          {notifications.map((n) => renderSseNotification(n))}
                           {pendingRequests.length === 0 && notifications.length === 0 && (
                             <p className="py-4 text-center text-xs text-white/40">אין התראות חדשות</p>
                           )}
@@ -383,11 +424,7 @@ export function Navbar() {
                 </div>
               );
             })}
-            {notifications.map((n) => (
-              <button key={n.id} type="button" onClick={() => dismiss(n.id)} className="w-full rounded-xl border border-white/15 bg-white/10 p-2.5 text-right text-xs text-white hover:bg-white/15">
-                {n.message}
-              </button>
-            ))}
+            {notifications.map((n) => renderSseNotification(n))}
             {pendingRequests.length === 0 && notifications.length === 0 && (
               <p className="py-3 text-center text-xs text-white/40">אין התראות חדשות</p>
             )}
