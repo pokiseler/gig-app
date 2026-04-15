@@ -28,10 +28,7 @@ const postFormSchema = z.object({
   city:        z.string().trim().min(2,  "יש להזין עיר"),
   address:     z.string().trim().min(2,  "יש להזין כתובת"),
   tags:        z.string().trim().optional(),
-  tipAmount:   z.preprocess(
-    (value) => (typeof value === "number" && Number.isNaN(value) ? undefined : value),
-    z.number().min(0, "הסכום לא יכול להיות שלילי").max(10000).optional(),
-  ),
+  tipAmount:   z.number().min(0, "הסכום לא יכול להיות שלילי").max(10000).optional(),
   tipMethod:   z.enum(["cash", "bit"]).optional(),
 });
 
@@ -137,7 +134,15 @@ export default function PostPage() {
                     min={0}
                     step={1}
                     placeholder="0"
-                    {...register("tipAmount", { valueAsNumber: true })}
+                    {...register("tipAmount", {
+                      setValueAs: (value) => {
+                        if (value === "" || value === null || value === undefined) {
+                          return undefined;
+                        }
+                        const parsed = Number(value);
+                        return Number.isNaN(parsed) ? undefined : parsed;
+                      },
+                    })}
                   />
                   {errors.tipAmount && <p className="mt-1 text-xs text-red-600">{errors.tipAmount.message}</p>}
                 </div>
